@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #1a1a2e;
+  --accent: #e94560;
+  --accent-2: #f5a623;
+  --surface: #ffffff;
+  --surface-2: #f8f7f4;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --border: #e5e2da;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+}
+
+.dark {
+  --primary: #f8f7f4;
+  --surface: #0f0f1a;
+  --surface-2: #1a1a2e;
+  --text: #f8f7f4;
+  --text-muted: #9ca3af;
+  --border: #2a2a3e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--surface-2) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes gradient-mesh {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+  background-size: 400% 400%;
+  animation: gradient-mesh 8s ease infinite;
+}
+
+@keyframes draw-plane {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+.plane-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-plane 2s ease forwards 0.5s;
+}
