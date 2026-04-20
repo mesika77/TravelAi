@@ -3,6 +3,41 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import Papa from 'papaparse'
 
+const PASSPORT_CODES: Record<string, string> = {
+  US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+  DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain', NL: 'Netherlands',
+  JP: 'Japan', KR: 'South Korea', CN: 'China', IN: 'India', BR: 'Brazil',
+  MX: 'Mexico', ZA: 'South Africa', IL: 'Israel', SG: 'Singapore',
+  NZ: 'New Zealand', SE: 'Sweden', NO: 'Norway', CH: 'Switzerland',
+  AT: 'Austria', BE: 'Belgium', PL: 'Poland', PT: 'Portugal', GR: 'Greece',
+  TR: 'Turkey', RU: 'Russia', AE: 'United Arab Emirates',
+}
+
+const CITY_TO_COUNTRY: Record<string, string> = {
+  Bangkok: 'Thailand', Tokyo: 'Japan', Paris: 'France', London: 'United Kingdom',
+  'New York': 'United States', Rome: 'Italy', Barcelona: 'Spain', Berlin: 'Germany',
+  Amsterdam: 'Netherlands', Dubai: 'United Arab Emirates', Singapore: 'Singapore',
+  Sydney: 'Australia', Toronto: 'Canada', Madrid: 'Spain', Lisbon: 'Portugal',
+  Athens: 'Greece', Istanbul: 'Turkey', Bali: 'Indonesia', 'Ho Chi Minh City': 'Vietnam',
+  Hanoi: 'Vietnam', Seoul: 'South Korea', Osaka: 'Japan', Kyoto: 'Japan',
+  Mumbai: 'India', Delhi: 'India', 'Cape Town': 'South Africa', Cairo: 'Egypt',
+  Marrakech: 'Morocco', Nairobi: 'Kenya', 'Buenos Aires': 'Argentina',
+  'Rio de Janeiro': 'Brazil', 'Mexico City': 'Mexico', Cancun: 'Mexico',
+  Phuket: 'Thailand', 'Chiang Mai': 'Thailand', Kuala Lumpur: 'Malaysia',
+  Jakarta: 'Indonesia', Manila: 'Philippines', Taipei: 'Taiwan',
+  'Hong Kong': 'Hong Kong', Macau: 'Macau', Vienna: 'Austria', Prague: 'Czech Republic',
+  Budapest: 'Hungary', Warsaw: 'Poland', Stockholm: 'Sweden', Oslo: 'Norway',
+  Copenhagen: 'Denmark', Helsinki: 'Finland', Zurich: 'Switzerland', Brussels: 'Belgium',
+}
+
+function normalizePassport(code: string): string {
+  return PASSPORT_CODES[code.toUpperCase()] ?? code
+}
+
+function normalizeDestination(city: string): string {
+  return CITY_TO_COUNTRY[city] ?? city
+}
+
 function mapVisaType(raw: string): VisaType {
   const v = raw.toLowerCase()
   if (v === 'visa free' || v === '0' || v.includes('visa free')) return 'visa_free'
@@ -42,12 +77,14 @@ function csvFallback(passport: string, destination: string): VisaResult {
 }
 
 export async function checkVisa(passport: string, destination: string): Promise<VisaResult> {
+  const passportCountry = normalizePassport(passport)
+  const destinationCountry = normalizeDestination(destination)
   const key = process.env.VISA_API_KEY
 
   if (key) {
     try {
       const res = await fetch(
-        `https://api.travel-buddy.ai/v2/visa/check?passport=${passport}&destination=${destination}`,
+        `https://api.travel-buddy.ai/v2/visa/check?passport=${encodeURIComponent(passportCountry)}&destination=${encodeURIComponent(destinationCountry)}`,
         { headers: { Authorization: `Bearer ${key}` }, next: { revalidate: 86400 } }
       )
       if (res.ok) {
@@ -56,8 +93,8 @@ export async function checkVisa(passport: string, destination: string): Promise<
           type: mapVisaType(String(data.visa_type ?? data.type ?? '')),
           maxStay: data.max_stay ?? data.duration,
           sourceUrl: data.source_url ?? data.link,
-          passportCountry: passport,
-          destinationCountry: destination,
+          passportCountry,
+          destinationCountry,
         }
       }
     } catch {
@@ -65,5 +102,5 @@ export async function checkVisa(passport: string, destination: string): Promise<
     }
   }
 
-  return csvFallback(passport, destination)
+  return csvFallback(passportCountry, destinationCountry)
 }
