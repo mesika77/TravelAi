@@ -7,15 +7,26 @@ export function findCityCoords(cityName: string): { lat: number; lon: number } |
   return match ? { lat: match.lat, lon: match.lon } : null
 }
 
-export async function fetchWeather(lat: number, lon: number): Promise<WeatherResult> {
-  const url = new URL('https://api.open-meteo.com/v1/forecast')
+function shiftYearBack(date: string, years = 1): string {
+  const d = new Date(date)
+  d.setFullYear(d.getFullYear() - years)
+  return d.toISOString().split('T')[0]
+}
+
+export async function fetchWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<WeatherResult> {
+  // Use historical archive for the same period last year — forecasts only go ~16 days out
+  const histStart = shiftYearBack(startDate)
+  const histEnd = shiftYearBack(endDate)
+
+  const url = new URL('https://archive-api.open-meteo.com/v1/archive')
   url.searchParams.set('latitude', String(lat))
   url.searchParams.set('longitude', String(lon))
+  url.searchParams.set('start_date', histStart)
+  url.searchParams.set('end_date', histEnd)
   url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_probability_mean')
-  url.searchParams.set('forecast_days', '7')
   url.searchParams.set('timezone', 'auto')
 
-  const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
+  const res = await fetch(url.toString(), { next: { revalidate: 86400 } })
   if (!res.ok) throw new Error(`Open-Meteo error: ${res.status}`)
 
   const data = await res.json()
@@ -30,7 +41,7 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherRes
     date,
     tempMax: daily.temperature_2m_max[i],
     tempMin: daily.temperature_2m_min[i],
-    precipProbability: daily.precipitation_probability_mean[i],
+    precipProbability: daily.precipitation_probability_mean[i] ?? 0,
   }))
 
   const avgHigh = Math.round(forecast.reduce((s, d) => s + d.tempMax, 0) / forecast.length)

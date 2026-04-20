@@ -8,9 +8,11 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl
   const city = searchParams.get('city')
+  const startDate = searchParams.get('startDate')
+  const endDate = searchParams.get('endDate')
 
-  if (!city) {
-    return NextResponse.json({ error: 'Missing required param: city' }, { status: 400 })
+  if (!city || !startDate || !endDate) {
+    return NextResponse.json({ error: 'Missing required params: city, startDate, endDate' }, { status: 400 })
   }
 
   try {
@@ -18,7 +20,7 @@ export async function GET(req: NextRequest) {
     if (!coords) {
       return NextResponse.json({ error: `City not found: ${city}` }, { status: 404 })
     }
-    const result = await fetchWeather(coords.lat, coords.lon)
+    const result = await fetchWeather(coords.lat, coords.lon, startDate, endDate)
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate' },
     })

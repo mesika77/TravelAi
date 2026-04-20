@@ -30,7 +30,7 @@ export default function WeatherWidget() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/weather?city=${encodeURIComponent(params.destination)}`)
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(params.destination)}&startDate=${params.departureDate}&endDate=${params.returnDate}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to load weather')
       setWeather(data)
