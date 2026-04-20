@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { streamChat, buildSystemPrompt } from '@/lib/groq'
 import type { ChatMessage, TripParams } from '@/lib/types'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, 20, 60 * 60 * 1000)
+  if (limited) return limited
+
   try {
     const body = await req.json()
     const { messages, tripParams, nights } = body as {

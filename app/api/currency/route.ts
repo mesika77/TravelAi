@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchCurrency, findCurrencyCode } from '@/lib/currency'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function GET(req: NextRequest) {
+  const limited = rateLimit(req, 30, 60 * 60 * 1000)
+  if (limited) return limited
+
   const { searchParams } = req.nextUrl
   const city = searchParams.get('city')
   const budgetParam = searchParams.get('budget')

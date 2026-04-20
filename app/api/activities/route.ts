@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchActivities } from '@/lib/foursquare'
 import { findCityCoords } from '@/lib/weather'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function GET(req: NextRequest) {
+  const limited = rateLimit(req, 30, 60 * 60 * 1000)
+  if (limited) return limited
+
   const { searchParams } = req.nextUrl
   const city = searchParams.get('city')
   const interests = searchParams.get('interests')
@@ -24,6 +28,7 @@ export async function GET(req: NextRequest) {
     if (msg === 'FOURSQUARE_API_KEY_MISSING') {
       return NextResponse.json({ error: 'FOURSQUARE_API_KEY not configured', key: 'FOURSQUARE_API_KEY' }, { status: 503 })
     }
-    return NextResponse.json({ error: 'Failed to fetch activities.' }, { status: 500 })
+    console.error('[activities]', err)
+    return NextResponse.json({ error: 'Failed to fetch activities.', detail: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }

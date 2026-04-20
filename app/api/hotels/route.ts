@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchHotels } from '@/lib/xotelo'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function GET(req: NextRequest) {
+  const limited = rateLimit(req, 10, 60 * 60 * 1000)
+  if (limited) return limited
+
   const { searchParams } = req.nextUrl
   const city = searchParams.get('city')
   const checkIn = searchParams.get('checkIn')
