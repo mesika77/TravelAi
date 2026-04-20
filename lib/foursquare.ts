@@ -31,7 +31,7 @@ export async function fetchActivities(
   url.searchParams.set('radius', '10000')
 
   const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${key}` },
+    headers: { Authorization: key },
     next: { revalidate: 3600 },
   })
   if (!res.ok) throw new Error(`Foursquare error: ${res.status}`)
