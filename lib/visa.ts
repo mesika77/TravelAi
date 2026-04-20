@@ -23,7 +23,7 @@ const CITY_TO_COUNTRY: Record<string, string> = {
   Mumbai: 'India', Delhi: 'India', 'Cape Town': 'South Africa', Cairo: 'Egypt',
   Marrakech: 'Morocco', Nairobi: 'Kenya', 'Buenos Aires': 'Argentina',
   'Rio de Janeiro': 'Brazil', 'Mexico City': 'Mexico', Cancun: 'Mexico',
-  Phuket: 'Thailand', 'Chiang Mai': 'Thailand', Kuala Lumpur: 'Malaysia',
+  Phuket: 'Thailand', 'Chiang Mai': 'Thailand', 'Kuala Lumpur': 'Malaysia',
   Jakarta: 'Indonesia', Manila: 'Philippines', Taipei: 'Taiwan',
   'Hong Kong': 'Hong Kong', Macau: 'Macau', Vienna: 'Austria', Prague: 'Czech Republic',
   Budapest: 'Hungary', Warsaw: 'Poland', Stockholm: 'Sweden', Oslo: 'Norway',
