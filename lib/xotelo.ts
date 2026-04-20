@@ -25,8 +25,9 @@ export async function fetchHotels(
 
   const hotels: Hotel[] = properties.slice(0, 5).map((h, i) => {
     const rate = h.rate_per_night as Record<string, unknown> | undefined
+    const total = h.total_rate as Record<string, unknown> | undefined
     const minRate = rate?.extracted_lowest as number | undefined
-    const maxRate = rate?.extracted_highest as number | undefined
+    const maxRate = total?.extracted_lowest as number | undefined
     return {
       key: String(h.property_token ?? h.name ?? `hotel-${i}`),
       name: String(h.name ?? 'Hotel'),

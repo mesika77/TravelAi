@@ -86,20 +86,15 @@ export default function HotelCard() {
                     </div>
                   )}
                 </div>
-                {(hotel.minRate || hotel.maxRate) && (
+                {hotel.minRate ? (
                   <div className="text-right">
-                    <span className="font-bold" style={{ color: 'var(--text)' }}>
-                      ${hotel.minRate ?? hotel.maxRate}
-                    </span>
-                    {hotel.maxRate && hotel.maxRate !== hotel.minRate && (
-                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                        {' '}–{' '}${hotel.maxRate}
-                      </span>
-                    )}
+                    <span className="font-bold text-lg" style={{ color: 'var(--text)' }}>${hotel.minRate}</span>
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>/night</p>
+                    {hotel.maxRate && (
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>${hotel.maxRate} total</p>
+                    )}
                   </div>
-                )}
-                {!hotel.minRate && !hotel.maxRate && (
+                ) : (
                   <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Price unavailable</span>
                 )}
               </div>
