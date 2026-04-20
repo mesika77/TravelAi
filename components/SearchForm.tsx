@@ -221,7 +221,7 @@ export default function SearchForm() {
                     min={1}
                     max={20}
                     value={form.adults ?? 1}
-                    onChange={(e) => set('adults', parseInt(e.target.value))}
+                    onChange={(e) => set('adults', parseInt(e.target.value) || 1)}
                     style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
                     className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none"
                   />
@@ -233,7 +233,7 @@ export default function SearchForm() {
                     min={0}
                     max={20}
                     value={form.children ?? 0}
-                    onChange={(e) => set('children', parseInt(e.target.value))}
+                    onChange={(e) => set('children', parseInt(e.target.value) || 0)}
                     style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
                     className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none"
                   />
