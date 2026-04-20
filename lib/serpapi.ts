@@ -11,7 +11,7 @@ export function findIataCode(cityName: string): string | null {
   return match?.iata ?? null
 }
 
-function parseFlights(arr: unknown[]): FlightOffer[] {
+function parseFlights(arr: unknown[], offset = 0): FlightOffer[] {
   if (!Array.isArray(arr)) return []
   return arr
     .slice(0, 10)
@@ -19,7 +19,7 @@ function parseFlights(arr: unknown[]): FlightOffer[] {
       const flight = f as Record<string, unknown>
       const firstLeg = (flight.flights as unknown[])?.[0] as Record<string, unknown> | undefined
       return {
-        id: `flight-${i}`,
+        id: `flight-${offset + i}`,
         price: Number(flight.price ?? 0),
         currency: 'USD',
         totalDuration: Number(flight.total_duration ?? 0),
@@ -73,7 +73,7 @@ export async function fetchFlights(
 
   const data = await res.json()
   const best = parseFlights((data.best_flights ?? []) as unknown[])
-  const other = parseFlights((data.other_flights ?? []) as unknown[])
+  const other = parseFlights((data.other_flights ?? []) as unknown[], best.length)
   const all = [...best, ...other].sort((a, b) => a.price - b.price)
   return all.slice(0, 3)
 }
