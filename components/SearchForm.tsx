@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plane, Users, Wallet, Globe, ChevronRight, ChevronLeft } from 'lucide-react'
 import { encodeTripId } from '@/lib/encode'
 import type { TripParams } from '@/lib/types'
+import CityAutocomplete from './CityAutocomplete'
 
 const INTERESTS = [
   { id: 'food', label: '🍽 Food' },
@@ -141,28 +142,18 @@ export default function SearchForm() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>From</label>
-                  <input
-                    type="text"
-                    placeholder="New York"
-                    value={form.origin ?? ''}
-                    onChange={(e) => set('origin', e.target.value)}
-                    style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                    className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>To</label>
-                  <input
-                    type="text"
-                    placeholder="Paris"
-                    value={form.destination ?? ''}
-                    onChange={(e) => set('destination', e.target.value)}
-                    style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                    className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                  />
-                </div>
+                <CityAutocomplete
+                  label="From"
+                  placeholder="New York"
+                  value={form.origin ?? ''}
+                  onChange={(val) => set('origin', val)}
+                />
+                <CityAutocomplete
+                  label="To"
+                  placeholder="Paris"
+                  value={form.destination ?? ''}
+                  onChange={(val) => set('destination', val)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
