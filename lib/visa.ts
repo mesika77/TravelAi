@@ -2,6 +2,7 @@ import type { VisaResult, VisaType } from './types'
 import { readFileSync } from 'fs'
 import path from 'path'
 import Papa from 'papaparse'
+import citiesData from '@/public/data/cities.json'
 
 const PASSPORT_CODES: Record<string, string> = {
   US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
@@ -13,29 +14,15 @@ const PASSPORT_CODES: Record<string, string> = {
   TR: 'Turkey', RU: 'Russia', AE: 'United Arab Emirates',
 }
 
-const CITY_TO_COUNTRY: Record<string, string> = {
-  Bangkok: 'Thailand', Tokyo: 'Japan', Paris: 'France', London: 'United Kingdom',
-  'New York': 'United States', Rome: 'Italy', Barcelona: 'Spain', Berlin: 'Germany',
-  Amsterdam: 'Netherlands', Dubai: 'United Arab Emirates', Singapore: 'Singapore',
-  Sydney: 'Australia', Toronto: 'Canada', Madrid: 'Spain', Lisbon: 'Portugal',
-  Athens: 'Greece', Istanbul: 'Turkey', Bali: 'Indonesia', 'Ho Chi Minh City': 'Vietnam',
-  Hanoi: 'Vietnam', Seoul: 'South Korea', Osaka: 'Japan', Kyoto: 'Japan',
-  Mumbai: 'India', Delhi: 'India', 'Cape Town': 'South Africa', Cairo: 'Egypt',
-  Marrakech: 'Morocco', Nairobi: 'Kenya', 'Buenos Aires': 'Argentina',
-  'Rio de Janeiro': 'Brazil', 'Mexico City': 'Mexico', Cancun: 'Mexico',
-  Phuket: 'Thailand', 'Chiang Mai': 'Thailand', 'Kuala Lumpur': 'Malaysia',
-  Jakarta: 'Indonesia', Manila: 'Philippines', Taipei: 'Taiwan',
-  'Hong Kong': 'Hong Kong', Macau: 'Macau', Vienna: 'Austria', Prague: 'Czech Republic',
-  Budapest: 'Hungary', Warsaw: 'Poland', Stockholm: 'Sweden', Oslo: 'Norway',
-  Copenhagen: 'Denmark', Helsinki: 'Finland', Zurich: 'Switzerland', Brussels: 'Belgium',
-}
-
 function normalizePassport(code: string): string {
   return PASSPORT_CODES[code.toUpperCase()] ?? code
 }
 
 function normalizeDestination(city: string): string {
-  return CITY_TO_COUNTRY[city] ?? city
+  const match = (citiesData as { name: string; country: string }[]).find(
+    (c) => c.name.toLowerCase() === city.toLowerCase()
+  )
+  return match?.country ?? city
 }
 
 function mapVisaType(raw: string): VisaType {
