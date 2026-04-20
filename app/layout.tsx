@@ -82,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, [])
 
   return (
-    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <head>
         <title>TravelAI — Plan your perfect trip</title>
         <meta name="description" content="AI-powered travel planning with real-time flights, visa checks, hotels, weather, and a personal travel concierge." />
