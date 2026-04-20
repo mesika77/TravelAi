@@ -61,6 +61,11 @@ export default function HotelCard() {
       )}
       {result && !loading && (
         <div className="flex flex-col gap-3">
+          {result.isEstimate && (
+            <p className="text-xs px-1" style={{ color: 'var(--text-muted)' }}>
+              ℹ️ Prices estimated from same season — exact rates unavailable this far in advance.
+            </p>
+          )}
           {result.hotels.length === 0 && (
             <div className="card text-center py-6">
               <Building2 size={32} className="mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />

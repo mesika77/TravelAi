@@ -43,12 +43,21 @@ export default function WeatherWidget() {
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chartData = weather?.forecast.map((d) => ({
-    day: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
-    high: d.tempMax,
-    low: d.tempMin,
-    rain: d.precipProbability,
-  }))
+  const forecast = weather?.forecast ?? []
+  // Sample ~7 evenly spaced points for the chart to avoid overcrowding
+  const step = Math.max(1, Math.floor(forecast.length / 7))
+  const chartData = forecast
+    .filter((_, i) => i % step === 0)
+    .map((d) => ({
+      day: new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      high: d.tempMax,
+      low: d.tempMin,
+      rain: d.precipProbability,
+    }))
+
+  const rainValues = forecast.map((d) => d.precipProbability)
+  const rainMin = rainValues.length ? Math.min(...rainValues) : 0
+  const rainMax = rainValues.length ? Math.max(...rainValues) : 0
 
   return (
     <section>
@@ -77,7 +86,7 @@ export default function WeatherWidget() {
             </span>
             <span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
               <Droplets size={15} strokeWidth={1.5} style={{ color: 'var(--info)' }} />
-              {weather.avgRain}% rain
+              {rainMin}%–{rainMax}% rain chance
             </span>
           </div>
           <ResponsiveContainer width="100%" height={140}>

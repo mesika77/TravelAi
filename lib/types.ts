@@ -44,6 +44,7 @@ export interface Hotel {
 export interface HotelsResult {
   hotels: Hotel[]
   avgNightly: number
+  isEstimate?: boolean
 }
 
 export type VisaType = 'visa_free' | 'e_visa' | 'visa_required' | 'visa_on_arrival' | 'free_movement' | 'unknown'
