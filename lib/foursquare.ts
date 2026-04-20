@@ -1,14 +1,14 @@
 import type { Activity } from './types'
 
-const INTEREST_CATEGORIES: Record<string, number> = {
-  food: 13000,
-  culture: 10000,
-  nature: 16000,
-  nightlife: 10032,
-  adventure: 16000,
-  shopping: 17000,
-  history: 16020,
-  beaches: 16019,
+const INTEREST_QUERIES: Record<string, string> = {
+  food: 'restaurants',
+  culture: 'museums and cultural sites',
+  nature: 'nature parks',
+  nightlife: 'bars and nightlife',
+  adventure: 'adventure activities',
+  shopping: 'shopping malls',
+  history: 'historical sites',
+  beaches: 'beaches',
 }
 
 export async function fetchActivities(
@@ -16,50 +16,46 @@ export async function fetchActivities(
   lon: number,
   interests: string[]
 ): Promise<Activity[]> {
-  const key = process.env.FOURSQUARE_API_KEY
-  if (!key) throw new Error('FOURSQUARE_API_KEY_MISSING')
+  const key = process.env.SERPAPI_KEY
+  if (!key) throw new Error('SERPAPI_KEY_MISSING')
 
-  const categoryIds = [
-    ...new Set(interests.map((i) => INTEREST_CATEGORIES[i]).filter(Boolean)),
-  ]
-  if (categoryIds.length === 0) return []
+  const queries = interests
+    .map((i) => INTEREST_QUERIES[i])
+    .filter(Boolean)
 
-  const url = new URL('https://api.foursquare.com/v3/places/search')
-  url.searchParams.set('ll', `${lat},${lon}`)
-  url.searchParams.set('categories', categoryIds.join(','))
-  url.searchParams.set('limit', '9')
-  url.searchParams.set('radius', '10000')
+  if (queries.length === 0) return []
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: key },
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) throw new Error(`Foursquare error: ${res.status}`)
+  const query = queries.join(', ')
+
+  const url = new URL('https://serpapi.com/search')
+  url.searchParams.set('engine', 'google_maps')
+  url.searchParams.set('q', query)
+  url.searchParams.set('ll', `@${lat},${lon},14z`)
+  url.searchParams.set('type', 'search')
+  url.searchParams.set('hl', 'en')
+  url.searchParams.set('api_key', key)
+
+  const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
+  if (!res.ok) throw new Error(`SerpApi maps error: ${res.status}`)
 
   const data = await res.json()
-  const results = (data.results ?? []) as Record<string, unknown>[]
+  const results = (data.local_results ?? []) as Record<string, unknown>[]
 
-  return results.map((place) => {
-    const categories = (place.categories as { name: string }[]) ?? []
-    const location = place.location as Record<string, unknown> | undefined
-    const geocodes = place.geocodes as Record<string, { lat: number; lng: number }> | undefined
-
+  return results.slice(0, 9).map((place, i) => {
     const placeInterest =
       interests.find((interest) => {
-        const catId = INTEREST_CATEGORIES[interest]
-        return (place.categories as { id: number }[])?.some((c) => Math.floor(c.id / 1000) * 1000 === catId)
-      }) ?? interests[0] ?? 'culture'
+        const q = INTEREST_QUERIES[interest] ?? ''
+        const type = String(place.type ?? '').toLowerCase()
+        return q.split(' ').some((word) => type.includes(word))
+      }) ?? interests[0]
 
     return {
-      id: String(place.fsq_id ?? Math.random()),
-      name: String(place.name ?? ''),
-      category: categories[0]?.name ?? 'Place',
-      address: [
-        location?.address,
-        location?.locality,
-      ].filter(Boolean).join(', '),
-      distance: place.distance as number | undefined,
-      rating: undefined,
+      id: String(place.place_id ?? place.data_id ?? i),
+      name: String(place.title ?? ''),
+      category: String(place.type ?? 'Place'),
+      address: String(place.address ?? ''),
+      distance: undefined,
+      rating: place.rating ? Number(place.rating) : undefined,
       interest: placeInterest,
     }
   })

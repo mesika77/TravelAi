@@ -25,10 +25,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ activities })
   } catch (err) {
     const msg = err instanceof Error ? err.message : ''
-    if (msg === 'FOURSQUARE_API_KEY_MISSING') {
-      return NextResponse.json({ error: 'FOURSQUARE_API_KEY not configured', key: 'FOURSQUARE_API_KEY' }, { status: 503 })
+    if (msg === 'SERPAPI_KEY_MISSING') {
+      return NextResponse.json({ error: 'SERPAPI_KEY not configured' }, { status: 503 })
     }
     console.error('[activities]', err)
-    return NextResponse.json({ error: 'Failed to fetch activities.', detail: err instanceof Error ? err.message : String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch activities.' }, { status: 500 })
   }
 }
