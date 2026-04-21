@@ -23,7 +23,7 @@ export async function fetchWeather(lat: number, lon: number, startDate: string, 
   url.searchParams.set('longitude', String(lon))
   url.searchParams.set('start_date', histStart)
   url.searchParams.set('end_date', histEnd)
-  url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_probability_mean')
+  url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_sum')
   url.searchParams.set('timezone', 'auto')
 
   const res = await fetch(url.toString(), { next: { revalidate: 86400 } })
@@ -34,19 +34,21 @@ export async function fetchWeather(lat: number, lon: number, startDate: string, 
     time: string[]
     temperature_2m_max: number[]
     temperature_2m_min: number[]
-    precipitation_probability_mean: number[]
+    precipitation_sum: number[]
   }
 
   const forecast = daily.time.map((date, i) => ({
     date,
     tempMax: daily.temperature_2m_max[i],
     tempMin: daily.temperature_2m_min[i],
-    precipProbability: daily.precipitation_probability_mean[i] ?? 0,
+    precipProbability: daily.precipitation_sum[i] ?? 0,
   }))
 
   const avgHigh = Math.round(forecast.reduce((s, d) => s + d.tempMax, 0) / forecast.length)
   const avgLow = Math.round(forecast.reduce((s, d) => s + d.tempMin, 0) / forecast.length)
-  const avgRain = Math.round(forecast.reduce((s, d) => s + d.precipProbability, 0) / forecast.length)
+  // precipProbability repurposed as mm/day; avgRain = % of rainy days (>1mm)
+  const rainyDays = forecast.filter((d) => d.precipProbability > 1).length
+  const avgRain = Math.round((rainyDays / forecast.length) * 100)
 
   return { forecast, avgHigh, avgLow, avgRain }
 }

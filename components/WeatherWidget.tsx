@@ -55,9 +55,8 @@ export default function WeatherWidget() {
       rain: d.precipProbability,
     }))
 
-  const rainValues = forecast.map((d) => d.precipProbability)
-  const rainMin = rainValues.length ? Math.min(...rainValues) : 0
-  const rainMax = rainValues.length ? Math.max(...rainValues) : 0
+  const rainyDays = forecast.filter((d) => d.precipProbability > 1).length
+  const rainyPct = forecast.length ? Math.round((rainyDays / forecast.length) * 100) : 0
 
   return (
     <section>
@@ -86,7 +85,7 @@ export default function WeatherWidget() {
             </span>
             <span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
               <Droplets size={15} strokeWidth={1.5} style={{ color: 'var(--info)' }} />
-              {rainMin}%–{rainMax}% rain chance
+              Rain on {rainyPct}% of days
             </span>
           </div>
           <ResponsiveContainer width="100%" height={140}>
@@ -108,7 +107,7 @@ export default function WeatherWidget() {
                   color: 'var(--text)',
                 }}
                 formatter={(value, name) => [
-                  name === 'rain' ? `${value}%` : `${value}°C`,
+                  name === 'rain' ? `${value}mm` : `${value}°C`,
                   name === 'high' ? 'High' : name === 'low' ? 'Low' : 'Rain',
                 ] as [string, string]}
               />
