@@ -61,9 +61,14 @@ export default function ActivityCard() {
 
   return (
     <section>
-      <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        🗺 Activities
-      </h2>
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <h2 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
+          🗺 Activities
+        </h2>
+        <p className="text-xs mt-1 text-right" style={{ color: 'var(--text-muted)' }}>
+          Results may skew toward popular categories
+        </p>
+      </div>
       {loading && <Skeleton />}
       {error && !loading && (
         <div className="card flex flex-col gap-3">
