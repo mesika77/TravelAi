@@ -1,11 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, ArrowLeft, Minus, Plus } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Minus, Plus, LocateFixed } from 'lucide-react'
 import { encodeTripId } from '@/lib/encode'
 import type { TripParams } from '@/lib/types'
 import CityAutocomplete from './CityAutocomplete'
+import citiesData from '@/public/data/cities.json'
+import airportsData from '@/public/data/airports.json'
+
+const airportCities = new Set(
+  (airportsData as { city: string }[]).map((a) => a.city.toLowerCase())
+)
+
+const citiesWithAirports = (citiesData as { name: string; lat: number; lon: number }[]).filter(
+  (c) => airportCities.has(c.name.toLowerCase())
+)
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function nearestAirportCity(lat: number, lon: number): string {
+  let best = citiesWithAirports[0]
+  let bestDist = Infinity
+  for (const c of citiesWithAirports) {
+    const d = haversineKm(lat, lon, c.lat, c.lon)
+    if (d < bestDist) { bestDist = d; best = c }
+  }
+  return best.name
+}
 
 const INTERESTS = [
   { id: 'food', label: 'Food' },
@@ -55,6 +85,8 @@ export default function SearchForm() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [oneWay, setOneWay] = useState(false)
+  const [detectedCity, setDetectedCity] = useState<string | null>(null)
+  const [locating, setLocating] = useState(false)
   const [form, setForm] = useState<Partial<TripParams>>({
     adults: 2,
     children: 0,
@@ -62,6 +94,21 @@ export default function SearchForm() {
     passport: 'US',
     interests: [],
   })
+
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
+        setDetectedCity(city)
+        setForm((f) => f.origin ? f : { ...f, origin: city })
+        setLocating(false)
+      },
+      () => setLocating(false),
+      { timeout: 6000, maximumAge: 300_000 }
+    )
+  }, [])
 
   const set = (key: keyof TripParams, val: unknown) =>
     setForm((f) => ({ ...f, [key]: val }))
@@ -139,12 +186,26 @@ export default function SearchForm() {
           </div>
 
           <div className="sf-grid-2">
-            <CityAutocomplete
-              label="From"
-              placeholder="New York"
-              value={form.origin ?? ''}
-              onChange={(val) => set('origin', val)}
-            />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div className="field-label">From</div>
+                {locating && (
+                  <span className="mono mute" style={{ fontSize: 9, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <LocateFixed size={10} style={{ animation: 'spin 1s linear infinite' }} /> Detecting…
+                  </span>
+                )}
+                {detectedCity && form.origin === detectedCity && !locating && (
+                  <span className="mono" style={{ fontSize: 9, color: 'var(--go)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <LocateFixed size={10} /> Detected
+                  </span>
+                )}
+              </div>
+              <CityAutocomplete
+                placeholder="New York"
+                value={form.origin ?? ''}
+                onChange={(val) => set('origin', val)}
+              />
+            </div>
             <CityAutocomplete
               label="To"
               placeholder="Lisbon"
