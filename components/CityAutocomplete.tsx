@@ -35,7 +35,10 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
   const ref = useRef<HTMLDivElement>(null)
 
   const filtered = query.length >= 1
-    ? ALL.filter((s) => s.city.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    ? ALL.filter((s) => {
+        const q = query.toLowerCase()
+        return s.city.toLowerCase().includes(q) || s.country.toLowerCase().includes(q)
+      }).slice(0, 8)
     : []
 
   useEffect(() => { setQuery(value) }, [value])
