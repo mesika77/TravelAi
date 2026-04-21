@@ -15,11 +15,9 @@ for (const a of airportsData as { city: string; iata: string }[]) {
   iataMap.set(a.city.toLowerCase(), a.iata)
 }
 
-const ALL: Suggestion[] = (citiesData as { name: string; country: string }[]).map((c) => ({
-  city: c.name,
-  country: c.country,
-  iata: iataMap.get(c.name.toLowerCase()),
-}))
+const ALL: Suggestion[] = (citiesData as { name: string; country: string }[])
+  .map((c) => ({ city: c.name, country: c.country, iata: iataMap.get(c.name.toLowerCase()) }))
+  .filter((c) => c.iata !== undefined) as Suggestion[]
 
 interface Props {
   value: string
