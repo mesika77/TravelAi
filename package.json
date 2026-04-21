@@ -1,6 +1,7 @@
 {
   "name": "travelai",
   "version": "0.1.0",
+  "description": "AI-powered travel planner — real-time flights, visa checks, hotels, weather, activities, currency, and an AI concierge in one page.",
   "private": true,
   "scripts": {
     "dev": "next dev",
