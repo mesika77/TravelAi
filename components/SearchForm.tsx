@@ -60,6 +60,7 @@ export default function SearchForm() {
     adults: 1,
     children: 0,
     budget: 2000,
+    passport: 'US',
     interests: [],
   })
 
