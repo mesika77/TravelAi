@@ -89,7 +89,7 @@ export default function SearchForm() {
   }
 
   const canNext0 = form.origin && form.destination && form.departureDate && (oneWay || form.returnDate)
-  const canNext1 = (form.adults ?? 0) > 0 && (form.budget ?? 0) > 0
+  const canNext1 = (form.adults ?? 0) > 0 && (oneWay || (form.budget ?? 0) > 0)
   const canSubmit = canNext1 && form.passport && (form.interests?.length ?? 0) > 0
 
   const slideVariants = {
@@ -256,20 +256,22 @@ export default function SearchForm() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium mb-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                  <Wallet size={14} strokeWidth={1.5} /> Budget per person (USD)
-                </label>
-                <input
-                  type="number"
-                  min={100}
-                  step={100}
-                  value={form.budget ?? 2000}
-                  onChange={(e) => set('budget', parseInt(e.target.value))}
-                  style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                  className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none"
-                />
-              </div>
+              {!oneWay && (
+                <div>
+                  <label className="text-xs font-medium mb-1 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                    <Wallet size={14} strokeWidth={1.5} /> Budget per person (USD)
+                  </label>
+                  <input
+                    type="number"
+                    min={100}
+                    step={100}
+                    value={form.budget ?? 2000}
+                    onChange={(e) => set('budget', parseInt(e.target.value))}
+                    style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                    className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none"
+                  />
+                </div>
+              )}
               <div className="flex gap-2 mt-2">
                 <button onClick={() => goTo(0)} className="btn-secondary flex items-center gap-1">
                   <ChevronLeft size={18} strokeWidth={1.5} /> Back
