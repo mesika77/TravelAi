@@ -20,17 +20,31 @@ function Skeleton() {
   )
 }
 
+function monthRange(dateStr: string): { start: string; end: string; label: string } {
+  const d = new Date(dateStr)
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const start = new Date(year, month, 1).toISOString().split('T')[0]
+  const end = new Date(year, month + 1, 0).toISOString().split('T')[0]
+  const label = d.toLocaleDateString('en-US', { month: 'long' })
+  return { start, end, label }
+}
+
 export default function WeatherWidget() {
   const { params } = useTripContext()
   const [weather, setWeather] = useState<WeatherResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const month = params.oneWay ? monthRange(params.departureDate) : null
+
   const load = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/weather?city=${encodeURIComponent(params.destination)}&startDate=${params.departureDate}&endDate=${params.returnDate}`)
+      const startDate = month ? month.start : params.departureDate
+      const endDate = month ? month.end : params.returnDate
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(params.destination)}&startDate=${startDate}&endDate=${endDate}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to load weather')
       setWeather(data)
@@ -61,7 +75,7 @@ export default function WeatherWidget() {
   return (
     <section>
       <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        🌤 Weather Forecast
+        🌤 {month ? `${month.label} Weather` : 'Weather Forecast'}
       </h2>
       {loading && <Skeleton />}
       {error && !loading && (

@@ -35,10 +35,14 @@ export default function TripCostSummary() {
     setLoading(true)
     setError(null)
     try {
-      const [flightRes, hotelRes] = await Promise.allSettled([
-        fetch(`/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}`),
-        fetch(`/api/hotels?city=${encodeURIComponent(params.destination)}&checkIn=${params.departureDate}&checkOut=${params.returnDate}`),
-      ])
+      const fetches: Promise<Response>[] = [
+        fetch(`/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}&oneWay=${params.oneWay ?? false}`),
+      ]
+      if (!params.oneWay) {
+        fetches.push(fetch(`/api/hotels?city=${encodeURIComponent(params.destination)}&checkIn=${params.departureDate}&checkOut=${params.returnDate}`))
+      }
+
+      const [flightRes, hotelRes] = await Promise.allSettled(fetches)
 
       if (flightRes.status === 'fulfilled' && flightRes.value.ok) {
         const fd = await flightRes.value.json()
@@ -46,7 +50,7 @@ export default function TripCostSummary() {
         if (cheapest) setFlightPrice(cheapest.price)
       }
 
-      if (hotelRes.status === 'fulfilled' && hotelRes.value.ok) {
+      if (hotelRes && hotelRes.status === 'fulfilled' && hotelRes.value.ok) {
         const hd = await hotelRes.value.json() as HotelsResult
         if (hd.avgNightly) setAvgNightly(hd.avgNightly)
       }
@@ -93,48 +97,73 @@ export default function TripCostSummary() {
           <div className="flex items-center gap-2 mb-1">
             <DollarSign size={18} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
             <span className="font-semibold" style={{ color: 'var(--text)' }}>
-              {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''} · {nights} night{nights > 1 ? 's' : ''}
+              {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}{!params.oneWay && ` · ${nights} night${nights > 1 ? 's' : ''}`}
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex justify-between">
-              <span style={{ color: 'var(--text-muted)' }}>✈️ Flights</span>
-              <span style={{ color: 'var(--text)' }}>
-                {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'var(--text-muted)' }}>🏨 Hotels ({nights} nights)</span>
-              <span style={{ color: 'var(--text)' }}>
-                {hotelTotal !== null ? `$${hotelTotal.toLocaleString()}` : 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'var(--text-muted)' }}>🍽 Food (~${daily.food}/day)</span>
-              <span style={{ color: 'var(--text)' }}>${(daily.food * nights * totalTravelers).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'var(--text-muted)' }}>🚌 Transport (~${daily.transport}/day)</span>
-              <span style={{ color: 'var(--text)' }}>${(daily.transport * nights * totalTravelers).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: 'var(--text-muted)' }}>🎭 Activities (~${daily.activities}/day)</span>
-              <span style={{ color: 'var(--text)' }}>${(daily.activities * nights * totalTravelers).toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div
-            className="flex justify-between font-bold text-base mt-1 pt-3"
-            style={{ borderTop: '1px solid var(--border)', color: 'var(--text)' }}
-          >
-            <span>Estimated Total</span>
-            <span style={{ color: 'var(--accent)' }}>${grandTotal.toLocaleString()}</span>
-          </div>
-
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Budget per person: ${params.budget.toLocaleString()} · Estimate for planning purposes only.
-          </p>
+          {params.oneWay ? (
+            <>
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>✈️ One-way flight</span>
+                  <span style={{ color: 'var(--text)' }}>
+                    {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
+                  </span>
+                </div>
+              </div>
+              <div
+                className="flex justify-between font-bold text-base mt-1 pt-3"
+                style={{ borderTop: '1px solid var(--border)', color: 'var(--text)' }}
+              >
+                <span>Flight Total</span>
+                <span style={{ color: 'var(--accent)' }}>
+                  {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
+                </span>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Return date unknown — only flight cost shown.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>✈️ Flights</span>
+                  <span style={{ color: 'var(--text)' }}>
+                    {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>🏨 Hotels ({nights} nights)</span>
+                  <span style={{ color: 'var(--text)' }}>
+                    {hotelTotal !== null ? `$${hotelTotal.toLocaleString()}` : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>🍽 Food (~${daily.food}/day)</span>
+                  <span style={{ color: 'var(--text)' }}>${(daily.food * nights * totalTravelers).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>🚌 Transport (~${daily.transport}/day)</span>
+                  <span style={{ color: 'var(--text)' }}>${(daily.transport * nights * totalTravelers).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>🎭 Activities (~${daily.activities}/day)</span>
+                  <span style={{ color: 'var(--text)' }}>${(daily.activities * nights * totalTravelers).toLocaleString()}</span>
+                </div>
+              </div>
+              <div
+                className="flex justify-between font-bold text-base mt-1 pt-3"
+                style={{ borderTop: '1px solid var(--border)', color: 'var(--text)' }}
+              >
+                <span>Estimated Total</span>
+                <span style={{ color: 'var(--accent)' }}>${grandTotal.toLocaleString()}</span>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Budget per person: ${params.budget.toLocaleString()} · Estimate for planning purposes only.
+              </p>
+            </>
+          )}
         </motion.div>
       )}
     </section>

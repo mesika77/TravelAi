@@ -64,8 +64,13 @@ export async function checkVisa(passport: string, destination: string): Promise<
   const passportCode = passport.toUpperCase()
   const passportName = PASSPORT_NAMES[passportCode] ?? passport
   const city = cityLookup(destination)
-  const destinationCode = city?.countryCode ?? destination
+  const destinationCode = city?.countryCode ?? destination.toUpperCase()
   const destinationName = city?.country ?? destination
+
+  // Citizen travelling to their own country — never needs a visa
+  if (passportCode === destinationCode) {
+    return { type: 'free_movement', passportCountry: passportName, destinationCountry: destinationName }
+  }
 
   const key = process.env.VISA_API_KEY
 
