@@ -138,7 +138,7 @@ export default function TripCostSummary() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>🏨 Hotels ({nights} nights)</span>
+                  <span style={{ color: 'var(--text-muted)' }}>🏨 Hotels (cheapest · {nights} nights)</span>
                   <span style={{ color: 'var(--text)' }}>
                     {hotelTotal !== null ? `$${hotelTotal.toLocaleString()}` : 'N/A'}
                   </span>

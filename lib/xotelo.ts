@@ -68,9 +68,7 @@ export async function fetchHotels(
   })
 
   const rates = hotels.map((h) => h.minRate).filter((r): r is number => r !== undefined)
-  const avgNightly = rates.length > 0
-    ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length)
-    : 0
+  const avgNightly = rates.length > 0 ? Math.min(...rates) : 0
 
   return { hotels: hotels.slice(0, 3), avgNightly, isEstimate }
 }
