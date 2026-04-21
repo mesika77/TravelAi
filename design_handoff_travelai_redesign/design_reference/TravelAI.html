@@ -1,0 +1,1612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TravelAI — Redesign</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ========== TRAVELAI DESIGN TOKENS ========== */
+:root {
+  --ink:          #1a1814;
+  --ink-2:        #2e2a24;
+  --ink-3:        #5a544a;
+  --ink-4:        #8b8478;
+  --paper:        #faf7f1;
+  --paper-2:      #f3efe6;
+  --paper-3:      #eae4d6;
+  --line:         #d9d2bf;
+  --line-soft:    #e8e2d1;
+  --accent:       oklch(62% 0.18 38);
+  --accent-2:     oklch(55% 0.20 28);
+  --accent-soft:  oklch(92% 0.04 45);
+  --go:           oklch(58% 0.12 150);
+  --caution:      oklch(72% 0.14 85);
+  --stop:         oklch(58% 0.18 25);
+  --f-display:    "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --f-sans:       "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-mono:       "JetBrains Mono", ui-monospace, monospace;
+  --r:            14px;
+  --r-lg:         20px;
+  --r-sm:         8px;
+  --density:      1;
+}
+[data-theme="dark"] {
+  --ink:          #f2ede2;
+  --ink-2:        #d8d1c2;
+  --ink-3:        #9d9685;
+  --ink-4:        #6b6556;
+  --paper:        #17150f;
+  --paper-2:      #1f1c14;
+  --paper-3:      #2a2619;
+  --line:         #342f22;
+  --line-soft:    #2a2619;
+  --accent-soft:  oklch(32% 0.08 45 / 0.35);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body {
+  font-family: var(--f-sans); color: var(--ink); background: var(--paper);
+  font-size: 15px; line-height: 1.5; letter-spacing: -0.005em;
+}
+body { overflow-x: hidden; transition: background .35s, color .35s; }
+h1, h2, h3, h4, .serif {
+  font-family: var(--f-display); font-weight: 400;
+  letter-spacing: -0.022em; line-height: 1.05;
+}
+.mono { font-family: var(--f-mono); letter-spacing: 0; font-size: .76em; text-transform: uppercase; }
+a { color: inherit; text-decoration: none; cursor: pointer; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+input, select { font: inherit; color: inherit; }
+em { font-style: italic; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+.wrap-narrow { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 50; height: 68px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
+  backdrop-filter: blur(16px);
+  background: color-mix(in oklch, var(--paper) 80%, transparent);
+  border-bottom: 1px solid var(--line-soft);
+}
+.nav-brand { display: flex; align-items: center; gap: 12px;
+  font-family: var(--f-display); font-size: 22px; letter-spacing: -0.03em; }
+.nav-brand-mark {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  display: grid; place-items: center;
+  font-family: var(--f-display); font-size: 15px; font-style: italic;
+}
+.nav-right { display: flex; align-items: center; gap: 22px; }
+.nav-link { font-size: 13px; color: var(--ink-3); padding: 8px 0; }
+.nav-link:hover { color: var(--ink); }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--line); color: var(--ink-3);
+  transition: all .2s;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 22px; border-radius: var(--r);
+  font-size: 14px; font-weight: 500;
+  transition: all .2s; border: 1px solid transparent; white-space: nowrap;
+}
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-primary:hover { background: var(--ink-2); transform: translateY(-1px); }
+.btn-ghost { color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--paper-2); }
+.btn-accent { background: var(--accent); color: white; }
+.btn:disabled { opacity: .3; cursor: not-allowed; }
+.btn-link {
+  display: inline-flex; gap: 6px; align-items: center;
+  color: var(--ink); font-size: 11px; letter-spacing: .08em;
+  border-bottom: 1px solid var(--ink); padding-bottom: 2px;
+  text-transform: uppercase; font-family: var(--f-mono);
+}
+.btn-link:hover { color: var(--accent); border-color: var(--accent); }
+
+/* UTILS */
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink-4); }
+.kicker { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--ink-4); font-family: var(--f-mono); }
+.mute { color: var(--ink-3); }
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.hr { height: 1px; background: var(--line-soft); border: none; margin: 18px 0; }
+.hr-ink { background: color-mix(in oklch, var(--paper) 22%, transparent); }
+
+/* FIELDS */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink-4);
+}
+.input, .select {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+  font-family: var(--f-display); font-size: 24px;
+  letter-spacing: -0.01em; color: var(--ink);
+  outline: none; transition: border-color .2s; width: 100%;
+}
+.input:focus, .select:focus { border-bottom-color: var(--ink); }
+.input::placeholder { color: var(--ink-4); font-style: italic; }
+.select { appearance: none; cursor: pointer;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%235a544a' stroke-width='1.2' fill='none'/></svg>") no-repeat right 2px center;
+}
+
+/* PILL TOGGLE */
+.pill-toggle {
+  display: inline-flex; padding: 4px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--paper-2);
+}
+.pill-toggle button { padding: 8px 18px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; color: var(--ink-3); transition: all .2s; }
+.pill-toggle button.active { background: var(--ink); color: var(--paper); }
+
+/* CHIPS */
+.chipwrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; font-size: 13px; color: var(--ink-2);
+  transition: all .2s; display: inline-flex; align-items: center; gap: 7px; }
+.chip:hover { border-color: var(--ink-3); }
+.chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+/* PHOTO PLACEHOLDER */
+.photo {
+  position: relative; background: var(--paper-3);
+  background-image: repeating-linear-gradient(45deg,
+    color-mix(in oklch, var(--ink) 5%, transparent) 0 1px,
+    transparent 1px 10px);
+  overflow: hidden; display: grid; place-items: center;
+  border-radius: var(--r-sm);
+}
+.photo::after {
+  content: attr(data-label);
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-4);
+  padding: 4px 10px; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp .55s ease both; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
+
+/* =================== HERO =================== */
+.hero { position: relative; padding: 60px 0 40px; border-bottom: 1px solid var(--line-soft); }
+.hero-gradient { background:
+  radial-gradient(ellipse at 80% 0%, color-mix(in oklch, var(--accent) 18%, transparent), transparent 55%),
+  radial-gradient(ellipse at 20% 100%, color-mix(in oklch, var(--ink) 10%, transparent), transparent 60%),
+  var(--paper);
+}
+.hero-inner {
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 60px;
+  align-items: center; min-height: 560px;
+}
+.hero-title { font-size: clamp(54px, 7vw, 96px); letter-spacing: -0.03em; margin-top: 22px; }
+.hero-em { font-style: italic; color: var(--accent); font-weight: 300; }
+.hero-sub { font-size: 17px; max-width: 480px; margin-top: 24px; color: var(--ink-3); }
+.hero-meta { display: flex; gap: 40px; margin-top: 40px; }
+.hero-meta-item { display: flex; flex-direction: column; gap: 4px; }
+.hero-right { position: relative; }
+.hero-photo { width: 100%; aspect-ratio: 4/5; border-radius: var(--r-lg); }
+.hero-stamp {
+  position: absolute; bottom: -20px; left: -20px;
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 14px 18px; border-radius: var(--r);
+  transform: rotate(-3deg); text-align: left;
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+}
+.hero-marquee {
+  margin-top: 50px; overflow: hidden; white-space: nowrap;
+  padding: 14px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+  animation: marquee 40s linear infinite;
+  color: var(--ink-4);
+}
+
+/* =================== SEARCH SECTION =================== */
+.search-section { padding: 100px 0 80px; }
+.search-section-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 48px; gap: 40px;
+}
+.searchform {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 36px 40px;
+  box-shadow: 0 30px 80px -30px rgba(0,0,0,.12);
+}
+.sf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.sf-dots { display: flex; gap: 6px; }
+.sf-dot { height: 6px; border-radius: 3px; transition: all .3s; }
+.sf-step-label { color: var(--ink-4); }
+.sf-step { display: flex; flex-direction: column; gap: 28px; }
+.sf-row-toggle { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.sf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.sf-grid-1 { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.sf-footer { display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+
+.stepper { display: flex; align-items: center; gap: 20px;
+  padding: 10px 0; border-bottom: 1px solid var(--line); }
+.stepper button {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink-3);
+}
+.stepper button:hover { border-color: var(--ink); color: var(--ink); }
+.stepper span { font-family: var(--f-display); font-size: 28px; flex: 1; }
+
+/* =================== WHAT SECTION =================== */
+.what-section { padding: 80px 0; border-top: 1px solid var(--line-soft); }
+.what-head { margin-bottom: 50px; }
+.what-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.what-cell {
+  padding: 32px 28px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 14px;
+  min-height: 220px;
+  transition: background .2s;
+}
+.what-cell:hover { background: var(--paper-2); }
+.what-num { color: var(--ink-4); font-size: 11px; }
+.what-icon { color: var(--accent); }
+.what-title { font-size: 24px; }
+.what-desc { font-size: 13px; }
+
+/* =================== DEST STRIP =================== */
+.dest-strip { padding: 80px 0; background: var(--paper-2); border-top: 1px solid var(--line-soft); }
+.dest-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
+.dest-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.dest-card { display: block; }
+.dest-photo { aspect-ratio: 3/4; border-radius: var(--r); transition: transform .3s; }
+.dest-card:hover .dest-photo { transform: translateY(-4px); }
+.dest-meta { padding: 16px 4px; }
+
+/* =================== FOOTER =================== */
+.foot { padding: 80px 0 30px; border-top: 1px solid var(--line-soft); }
+.foot-inner { display: grid; grid-template-columns: 1.5fr 2fr; gap: 60px; margin-bottom: 60px; }
+.foot-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.foot-cols a { display: block; font-size: 13px; padding: 4px 0; color: var(--ink-3); }
+.foot-cols a:hover { color: var(--accent); }
+.foot-bottom { padding-top: 24px; border-top: 1px solid var(--line-soft); color: var(--ink-4); }
+
+/* =================== TRIP / RESULTS =================== */
+.trip-bar {
+  position: sticky; top: 68px; z-index: 40;
+  background: color-mix(in oklch, var(--paper) 82%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line-soft);
+}
+.trip-bar-inner { display: flex; justify-content: space-between; align-items: center;
+  height: 54px; gap: 20px; }
+.trip-route { display: flex; align-items: center; gap: 12px; }
+.trip-meta { display: flex; gap: 10px; font-size: 11px; }
+.trip-header { padding: 60px 0 50px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 60px; align-items: center; }
+.trip-title { font-size: clamp(56px, 6vw, 86px); margin-top: 12px; }
+.trip-title em { color: var(--accent); }
+.trip-desc { max-width: 460px; font-size: 16px; margin-top: 22px; }
+.trip-chips { display: flex; gap: 8px; margin-top: 26px; }
+.trip-chip {
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink-3); font-size: 10px;
+}
+.trip-hero { width: 100%; aspect-ratio: 1; border-radius: var(--r-lg); }
+
+.trip-grid {
+  display: grid; grid-template-columns: 1.6fr 1fr; gap: 40px;
+  padding: 20px 40px 100px;
+}
+.trip-main { display: flex; flex-direction: column; gap: 70px; }
+.trip-side { display: flex; flex-direction: column; gap: 24px;
+  position: sticky; top: 140px; align-self: start; }
+
+.sec { }
+.sec-sm {
+  border: 1px solid var(--line-soft); border-radius: var(--r-lg); padding: 22px;
+  background: var(--paper);
+}
+.sec-sm.card-ink { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.sec-sm-head { display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); margin-bottom: 14px; }
+.card-ink .sec-sm-head { border-color: color-mix(in oklch, var(--paper) 18%, transparent); }
+
+.section-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 26px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.section-title { font-size: 42px; margin-top: 4px; }
+
+/* FLIGHTS */
+.flight-route {
+  display: grid; grid-template-columns: auto 1fr auto auto auto;
+  align-items: center; gap: 24px;
+  padding: 22px 26px; border: 1px solid var(--line-soft); border-radius: var(--r);
+  margin-bottom: 20px; background: var(--paper-2);
+}
+.route-line { display: flex; align-items: center; gap: 8px; }
+.route-dash { flex: 1; height: 1px; background: var(--line); min-width: 30px; }
+.route-dates { text-align: right; }
+
+.flight-list { display: flex; flex-direction: column; gap: 10px; }
+.flight-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.3fr .8fr 1fr .8fr .7fr .9fr;
+  align-items: center; gap: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  transition: all .2s;
+}
+.flight-row:hover { border-color: var(--ink-4); background: var(--paper-2); }
+.flight-row-best { border-color: var(--ink); background: var(--paper); }
+.best-ribbon {
+  position: absolute; top: -10px; left: 22px;
+  padding: 3px 10px; background: var(--ink); color: var(--paper);
+  font-size: 9px; letter-spacing: .15em; border-radius: 4px;
+}
+.flight-airline { display: flex; gap: 12px; align-items: center; }
+.airline-mark {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--paper-3); color: var(--ink);
+  display: grid; place-items: center;
+  font-size: 13px; font-style: italic;
+}
+.flight-times { text-align: center; }
+.flight-dur { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dur-line { width: 100%; height: 1px; background: var(--ink-4); position: relative; }
+.dur-line::before, .dur-line::after {
+  content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--ink-4);
+}
+.dur-line::before { left: 0; } .dur-line::after { right: 0; }
+.flight-co2 { display: flex; align-items: center; gap: 5px; color: var(--ink-3); font-size: 11px; justify-self: center; }
+.flight-price { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+/* HOTELS */
+.hotel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.hotel-card { border: 1px solid var(--line-soft); border-radius: var(--r); overflow: hidden; background: var(--paper); transition: transform .2s; }
+.hotel-card:hover { transform: translateY(-3px); }
+.hotel-photo { aspect-ratio: 4/3; border-radius: 0; }
+.hotel-body { padding: 18px; }
+.stars { color: var(--accent); font-size: 13px; letter-spacing: 2px; margin-top: 6px; }
+.hotel-price { display: flex; justify-content: space-between; align-items: center; }
+
+/* ACTIVITIES */
+.act-cat { margin-bottom: 34px; }
+.act-cat-head { display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 12px; border-bottom: 1px dashed var(--line); margin-bottom: 10px; }
+.act-list { display: flex; flex-direction: column; }
+.act-item { display: flex; align-items: center; gap: 16px;
+  padding: 16px 2px; border-bottom: 1px solid var(--line-soft); }
+.act-item:last-child { border-bottom: none; }
+.act-index { color: var(--ink-4); min-width: 28px; }
+.act-rating { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+
+/* VISA */
+.visa-badge { display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; }
+.visa-dot { width: 8px; height: 8px; border-radius: 50%; }
+.visa-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; }
+.visa-meta > div > div:last-child { margin-top: 4px; }
+
+/* COST */
+.cost-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--paper) 15%, transparent); }
+.cost-row:last-child { border-bottom: none; }
+
+/* WEATHER */
+.weather-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+  margin: 18px 0 10px; height: 120px; align-items: end; }
+.wx-col { display: flex; flex-direction: column; align-items: center; }
+.wx-bar-wrap { width: 10px; height: 100px; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.wx-bar-high { position: absolute; bottom: 0; width: 10px;
+  background: var(--accent); border-radius: 5px 5px 0 0; }
+.wx-bar-low { position: absolute; bottom: 0; width: 10px;
+  background: color-mix(in oklch, var(--accent) 25%, var(--paper));
+  border-radius: 5px 5px 0 0; }
+.wx-rain { position: absolute; top: -10px; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); }
+
+/* CURRENCY */
+.curr-main { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+.curr-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+.curr-ref-row { display: flex; justify-content: space-between; padding: 6px 0;
+  border-bottom: 1px dashed var(--line-soft); }
+
+/* =================== CHATBOT =================== */
+.chat-fab {
+  position: fixed; bottom: 28px; right: 28px; z-index: 80;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  display: grid; place-items: center;
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+  transition: transform .2s;
+}
+.chat-fab:hover { transform: scale(1.06); }
+.chat-panel {
+  position: fixed; bottom: 28px; right: 28px; z-index: 81;
+  width: 400px; height: 560px; max-height: 80vh;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 30px 60px rgba(0,0,0,.2);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-header { display: flex; align-items: center; gap: 12px;
+  padding: 16px 18px; border-bottom: 1px solid var(--line-soft); }
+.chat-header-mark {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  display: grid; place-items: center;
+}
+.chat-body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.chat-msg { display: flex; gap: 10px; max-width: 90%; }
+.chat-user { margin-left: auto; }
+.chat-user .chat-bubble { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chat-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; flex-shrink: 0;
+  font-size: 9px;
+}
+.chat-bubble {
+  padding: 12px 14px; border-radius: 14px;
+  background: var(--paper-2); border: 1px solid var(--line-soft);
+  font-size: 13.5px; line-height: 1.5;
+}
+.chat-input-row { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--line-soft); }
+.chat-input {
+  flex: 1; background: var(--paper-2); border: 1px solid var(--line-soft);
+  border-radius: 999px; padding: 10px 16px; font-size: 13px; outline: none;
+}
+.chat-input:focus { border-color: var(--ink-3); }
+.chat-send {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ink); color: var(--paper); display: grid; place-items: center;
+}
+
+/* =================== TWEAKS PANEL =================== */
+.tweaks-panel {
+  position: fixed; bottom: 24px; left: 24px; z-index: 100;
+  width: 300px; background: var(--paper);
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.12);
+  transform: translateY(calc(100% + 40px));
+  transition: transform .3s ease;
+}
+.tweaks-panel.open { transform: translateY(0); }
+.tweaks-row { display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.tweaks-row:last-child { border-bottom: none; }
+.tweaks-row label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-4); font-family: var(--f-mono); }
+.tweaks-swatches { display: flex; gap: 6px; }
+.tweaks-swatch { width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer; transition: transform .15s; }
+.tweaks-swatch:hover { transform: scale(1.15); }
+.tweaks-swatch.on { border-color: var(--ink); }
+.tweaks-mini { display: flex; gap: 4px; }
+.tweaks-mini button {
+  padding: 4px 9px; font-size: 10px; border: 1px solid var(--line);
+  border-radius: 6px; color: var(--ink-3);
+  font-family: var(--f-mono); text-transform: lowercase;
+}
+.tweaks-mini button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* =================== RESPONSIVE =================== */
+@media (max-width: 960px) {
+  .wrap, .wrap-narrow { padding: 0 24px; }
+  .nav { padding: 0 24px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .trip-grid { grid-template-columns: 1fr; padding: 20px 24px 60px; }
+  .trip-side { position: static; }
+  .trip-header { grid-template-columns: 1fr; gap: 30px; }
+  .what-grid { grid-template-columns: repeat(2, 1fr); }
+  .dest-grid { grid-template-columns: repeat(2, 1fr); }
+  .hotel-grid { grid-template-columns: 1fr; }
+  .flight-row { grid-template-columns: 1fr 1fr; row-gap: 12px; }
+  .chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 12px; }
+}
+
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+  // Tweaks defaults — editable via in-design panel and host persistence
+  window.TRAVELAI_TWEAKS = /*EDITMODE-BEGIN*/{
+    "accent": "sunset",
+    "density": "comfortable",
+    "radius": "rounded",
+    "hero": "gradient",
+    "view": "landing"
+  }/*EDITMODE-END*/;
+</script>
+
+<script type="text/babel" data-presets="react" data-src="components/icons.jsx">
+// Lucide-style line icons, stroke 1.5, size-adaptive
+const Icon = ({ d, size = 18, fill = "none", stroke, style, className, children }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill}
+       stroke={stroke || "currentColor"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+       className={className} style={style}>
+    {children || (d ? <path d={d} /> : null)}
+  </svg>
+);
+
+const IArrowRight = (p) => <Icon {...p}><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></Icon>;
+const IArrowLeft = (p) => <Icon {...p}><path d="M19 12H5"/><path d="M11 5l-7 7 7 7"/></Icon>;
+const IPlane = (p) => <Icon {...p}><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></Icon>;
+const IMoon = (p) => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
+const ISun = (p) => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></Icon>;
+const IChat = (p) => <Icon {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>;
+const IClose = (p) => <Icon {...p}><path d="M18 6 6 18M6 6l12 12"/></Icon>;
+const ISend = (p) => <Icon {...p}><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></Icon>;
+const IShield = (p) => <Icon {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></Icon>;
+const IHotel = (p) => <Icon {...p}><path d="M3 22V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18"/><path d="M8 7h.01M8 11h.01M8 15h.01M12 7h.01M12 11h.01M12 15h.01M16 7h.01M16 11h.01M16 15h.01M3 22h18"/></Icon>;
+const ICloud = (p) => <Icon {...p}><path d="M17.5 19a4.5 4.5 0 1 0 0-9 6.5 6.5 0 0 0-12.5 1.5A4 4 0 0 0 5 19h12.5z"/></Icon>;
+const ICompass = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m16 8-6 2-2 6 6-2 2-6z"/></Icon>;
+const ICoin = (p) => <Icon {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9h4.5a2.5 2.5 0 0 1 0 5H9"/></Icon>;
+const IChevR = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const IChevL = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const IPlus = (p) => <Icon {...p}><path d="M12 5v14M5 12h14"/></Icon>;
+const IMinus = (p) => <Icon {...p}><path d="M5 12h14"/></Icon>;
+const ICheck = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const IExternal = (p) => <Icon {...p}><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></Icon>;
+const ILeaf = (p) => <Icon {...p}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></Icon>;
+const ISparkle = (p) => <Icon {...p}><path d="m12 3 1.88 5.76L20 10l-5.12 1.76L12 17l-1.88-5.24L5 10l6.12-1.24z"/></Icon>;
+const ISliders = (p) => <Icon {...p}><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></Icon>;
+const IUsers = (p) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M17 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+const IWallet = (p) => <Icon {...p}><path d="M20 12V8H4a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></Icon>;
+const IGlobe = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></Icon>;
+
+Object.assign(window, {
+  Icon, IArrowRight, IArrowLeft, IPlane, IMoon, ISun, IChat, IClose, ISend,
+  IShield, IHotel, ICloud, ICompass, ICoin, IChevR, IChevL, IPlus, IMinus,
+  ICheck, IExternal, ILeaf, ISparkle, ISliders, IUsers, IWallet, IGlobe
+});
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/nav.jsx">
+const Nav = ({ view, setView, theme, setTheme, openTweaks }) => {
+  return (
+    <header className="nav">
+      <div className="nav-brand" onClick={() => setView("landing")} style={{cursor:"pointer"}}>
+        <div className="nav-brand-mark">T</div>
+        <span>Travel<em style={{fontStyle:"italic", color:"var(--accent)"}}>AI</em></span>
+      </div>
+      <nav className="nav-right">
+        <a className="nav-link" onClick={() => setView("landing")}>Plan</a>
+        <a className="nav-link" onClick={() => setView("results")}>Results</a>
+        <a className="nav-link" href="#">Guides</a>
+        <button className="icon-btn" onClick={openTweaks} aria-label="Tweaks">
+          <ISliders size={15} />
+        </button>
+        <button className="icon-btn" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
+          {theme === "dark" ? <ISun size={15}/> : <IMoon size={15}/>}
+        </button>
+      </nav>
+    </header>
+  );
+};
+
+window.Nav = Nav;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/search_form.jsx">
+const INTERESTS = [
+  { id: "food", label: "Food" },
+  { id: "culture", label: "Culture" },
+  { id: "nature", label: "Nature" },
+  { id: "nightlife", label: "Nightlife" },
+  { id: "adventure", label: "Adventure" },
+  { id: "shopping", label: "Shopping" },
+  { id: "history", label: "History" },
+  { id: "beaches", label: "Beaches" },
+];
+
+const COUNTRIES = [
+  ["US","United States"],["GB","United Kingdom"],["CA","Canada"],["AU","Australia"],
+  ["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["NL","Netherlands"],
+  ["JP","Japan"],["IL","Israel"],["SG","Singapore"],["BR","Brazil"],["MX","Mexico"],
+];
+
+const SearchForm = ({ onSubmit }) => {
+  const [step, setStep] = React.useState(0);
+  const [oneWay, setOneWay] = React.useState(false);
+  const [form, setForm] = React.useState({
+    origin: "New York",
+    destination: "Lisbon",
+    departureDate: "2026-05-12",
+    returnDate: "2026-05-19",
+    adults: 2,
+    children: 0,
+    budget: 2400,
+    passport: "US",
+    interests: ["food","culture","beaches"],
+  });
+  const set = (k, v) => setForm(f => ({...f, [k]: v}));
+  const toggleInt = (id) => set("interests",
+    form.interests.includes(id) ? form.interests.filter(i => i !== id) : [...form.interests, id]);
+
+  const canNext0 = form.origin && form.destination && form.departureDate && (oneWay || form.returnDate);
+  const canNext1 = form.adults > 0 && (oneWay || form.budget > 0);
+  const canSubmit = canNext1 && form.passport && form.interests.length > 0;
+
+  return (
+    <div className="searchform">
+      <div className="sf-head">
+        <div className="sf-dots">
+          {[0,1,2].map(i => (
+            <div key={i} className="sf-dot" style={{
+              width: i === step ? 44 : 8,
+              background: i <= step ? "var(--ink)" : "var(--line)",
+              opacity: i < step ? .4 : 1
+            }} />
+          ))}
+        </div>
+        <div className="sf-step-label mono">Step {step+1} / 3</div>
+      </div>
+
+      {step === 0 && (
+        <div className="sf-step fade-up">
+          <div className="sf-row-toggle">
+            <div>
+              <div className="eyebrow">01 — Itinerary</div>
+              <h2 style={{fontSize: 38, marginTop: 6}}>Where & when.</h2>
+            </div>
+            <div className="pill-toggle">
+              <button className={!oneWay ? "active" : ""} onClick={() => setOneWay(false)}>Round trip</button>
+              <button className={oneWay ? "active" : ""} onClick={() => setOneWay(true)}>One way</button>
+            </div>
+          </div>
+
+          <div className="sf-grid-2">
+            <div className="field">
+              <div className="field-label">From</div>
+              <input className="input" value={form.origin} placeholder="Origin city"
+                     onChange={e => set("origin", e.target.value)} />
+            </div>
+            <div className="field">
+              <div className="field-label">To</div>
+              <input className="input" value={form.destination} placeholder="Destination city"
+                     onChange={e => set("destination", e.target.value)} />
+            </div>
+          </div>
+
+          <div className={oneWay ? "sf-grid-1" : "sf-grid-2"}>
+            <div className="field">
+              <div className="field-label">Departure</div>
+              <input className="input" type="date" value={form.departureDate}
+                     onChange={e => set("departureDate", e.target.value)} />
+            </div>
+            {!oneWay && (
+              <div className="field">
+                <div className="field-label">Return</div>
+                <input className="input" type="date" value={form.returnDate}
+                       onChange={e => set("returnDate", e.target.value)} />
+              </div>
+            )}
+          </div>
+
+          <div className="sf-footer">
+            <span className="mono mute">Press next or ↵</span>
+            <button className="btn btn-primary" disabled={!canNext0} onClick={() => setStep(1)}>
+              Continue <IArrowRight size={16}/>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="sf-step fade-up">
+          <div>
+            <div className="eyebrow">02 — Party</div>
+            <h2 style={{fontSize: 38, marginTop: 6}}>Who's coming along?</h2>
+          </div>
+
+          <div className="sf-grid-2">
+            <div className="field">
+              <div className="field-label">Adults</div>
+              <div className="stepper">
+                <button onClick={() => set("adults", Math.max(1, form.adults - 1))}><IMinus size={14}/></button>
+                <span className="tabular">{form.adults}</span>
+                <button onClick={() => set("adults", form.adults + 1)}><IPlus size={14}/></button>
+              </div>
+            </div>
+            <div className="field">
+              <div className="field-label">Children</div>
+              <div className="stepper">
+                <button onClick={() => set("children", Math.max(0, form.children - 1))}><IMinus size={14}/></button>
+                <span className="tabular">{form.children}</span>
+                <button onClick={() => set("children", form.children + 1)}><IPlus size={14}/></button>
+              </div>
+            </div>
+          </div>
+
+          {!oneWay && (
+            <div className="field">
+              <div className="field-label">Budget per person · USD</div>
+              <input className="input tabular" type="number" value={form.budget}
+                     onChange={e => set("budget", +e.target.value)} />
+              <div className="mono mute" style={{marginTop: 4}}>Includes flight, stay, and daily spend</div>
+            </div>
+          )}
+
+          <div className="sf-footer">
+            <button className="btn btn-ghost" onClick={() => setStep(0)}>
+              <IArrowLeft size={16}/> Back
+            </button>
+            <button className="btn btn-primary" disabled={!canNext1} onClick={() => setStep(2)}>
+              Continue <IArrowRight size={16}/>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="sf-step fade-up">
+          <div>
+            <div className="eyebrow">03 — Preferences</div>
+            <h2 style={{fontSize: 38, marginTop: 6}}>Tell us what you love.</h2>
+          </div>
+
+          <div className="field">
+            <div className="field-label">Passport</div>
+            <select className="select" value={form.passport} onChange={e => set("passport", e.target.value)}>
+              {COUNTRIES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <div className="field-label" style={{marginBottom: 12}}>Interests · pick at least one</div>
+            <div className="chipwrap">
+              {INTERESTS.map(i => {
+                const on = form.interests.includes(i.id);
+                return (
+                  <button key={i.id} className={"chip" + (on ? " on" : "")} onClick={() => toggleInt(i.id)}>
+                    {on && <span className="chip-dot" style={{background: "var(--paper)"}}/>}
+                    {i.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="sf-footer">
+            <button className="btn btn-ghost" onClick={() => setStep(1)}>
+              <IArrowLeft size={16}/> Back
+            </button>
+            <button className="btn btn-primary" disabled={!canSubmit} onClick={() => onSubmit({...form, oneWay})}>
+              Plan my trip <IArrowRight size={16}/>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+window.SearchForm = SearchForm;
+window.INTERESTS = INTERESTS;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/landing.jsx">
+const Landing = ({ onPlan, tweaks }) => {
+  return (
+    <div className="landing">
+      {/* HERO */}
+      <section className={"hero hero-" + tweaks.hero}>
+        <div className="wrap hero-inner">
+          <div className="hero-left">
+            <div className="eyebrow" style={{color:"var(--ink-3)"}}>№ 026 · Spring edition · 2026</div>
+            <h1 className="hero-title">
+              A trip,<br/>
+              <em className="hero-em">carefully</em> planned<br/>
+              in sixty seconds.
+            </h1>
+            <p className="hero-sub">
+              Real-time flights, visa checks, hotels, weather, things to do, and an
+              AI concierge who's read every guidebook — composed into a single
+              shareable page.
+            </p>
+            <div className="hero-meta">
+              <div className="hero-meta-item">
+                <div className="mono mute">Powered by</div>
+                <div className="serif" style={{fontSize: 20}}>Llama 3.3</div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="mono mute">Live data</div>
+                <div className="serif" style={{fontSize: 20}}>7 services</div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="mono mute">Plans built</div>
+                <div className="serif tabular" style={{fontSize: 20}}>184,302</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-right">
+            <div className="photo hero-photo" data-label="Destination photography"></div>
+            <div className="hero-stamp">
+              <div className="mono" style={{fontSize: 9, letterSpacing: ".2em"}}>Boarding · 2026</div>
+              <div className="serif" style={{fontSize: 28, fontStyle:"italic"}}>Lisbon</div>
+              <div className="mono mute" style={{fontSize: 10}}>38.72°N / 9.13°W</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-marquee mono">
+          Flights · Visa · Hotels · Weather · Activities · Currency · Concierge ·&nbsp;
+          Flights · Visa · Hotels · Weather · Activities · Currency · Concierge
+        </div>
+      </section>
+
+      {/* SEARCH */}
+      <section className="wrap search-section">
+        <div className="search-section-head">
+          <div>
+            <div className="eyebrow">Begin here</div>
+            <h2 className="serif" style={{fontSize: 44, marginTop: 8}}>
+              Three questions. One perfect itinerary.
+            </h2>
+          </div>
+          <div className="mono mute" style={{maxWidth: 260}}>
+            Your answers encode to a single shareable link — no account, no database.
+          </div>
+        </div>
+        <SearchForm onSubmit={onPlan} />
+      </section>
+
+      {/* WHAT YOU GET */}
+      <section className="wrap what-section">
+        <div className="what-head">
+          <div className="eyebrow">What arrives</div>
+          <h2 className="serif" style={{fontSize: 36, marginTop: 6, maxWidth: 560}}>
+            Seven services, composed on one page.
+          </h2>
+        </div>
+        <div className="what-grid">
+          {[
+            { n: "01", t: "Flights", d: "Real-time Google Flights via SerpAPI. Top three by price, carbon, and time.", icon: <IPlane/> },
+            { n: "02", t: "Visa", d: "Travel Buddy AI. Same-country shortcut. Offline CSV fallback.", icon: <IShield/> },
+            { n: "03", t: "Hotels", d: "Xotelo listings with nightly rates for your exact dates.", icon: <IHotel/> },
+            { n: "04", t: "Weather", d: "Historical archive — the same week, last year. No forecast surprises.", icon: <ICloud/> },
+            { n: "05", t: "Activities", d: "Google Maps places scored against your declared interests.", icon: <ICompass/> },
+            { n: "06", t: "Currency", d: "Live rates. Your budget, in their pocket.", icon: <ICoin/> },
+            { n: "07", t: "Concierge", d: "Llama 3.3 with full trip context loaded. Streams in milliseconds.", icon: <ISparkle/> },
+          ].map(f => (
+            <div className="what-cell" key={f.n}>
+              <div className="what-num mono">{f.n}</div>
+              <div className="what-icon">{f.icon}</div>
+              <div className="what-title serif">{f.t}</div>
+              <div className="what-desc mute">{f.d}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* DESTINATIONS STRIP */}
+      <section className="dest-strip">
+        <div className="wrap">
+          <div className="dest-head">
+            <div className="eyebrow">In season</div>
+            <div className="mono mute">May · 2026</div>
+          </div>
+          <div className="dest-grid">
+            {[
+              ["Lisbon","Portugal","21°","from $642"],
+              ["Kyoto","Japan","19°","from $1,120"],
+              ["Marrakech","Morocco","27°","from $780"],
+              ["Reykjavík","Iceland","11°","from $520"],
+            ].map(d => (
+              <a key={d[0]} className="dest-card">
+                <div className="photo dest-photo" data-label="Destination"></div>
+                <div className="dest-meta">
+                  <div className="serif" style={{fontSize: 22}}>{d[0]}</div>
+                  <div className="mono mute" style={{fontSize: 11}}>{d[1]} · {d[2]} avg</div>
+                  <div className="serif" style={{fontSize: 14, color:"var(--accent)", marginTop: 10}}>{d[3]} →</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="foot">
+        <div className="wrap foot-inner">
+          <div>
+            <div className="serif" style={{fontSize: 28, marginBottom: 14}}>
+              Travel<em style={{color:"var(--accent)"}}>AI</em>
+            </div>
+            <div className="mute" style={{maxWidth: 320, fontSize: 13}}>
+              An experiment in composing seven travel APIs into a single considered surface.
+              Open source.
+            </div>
+          </div>
+          <div className="foot-cols">
+            <div>
+              <div className="mono mute" style={{marginBottom: 10}}>Product</div>
+              <a>Plan a trip</a><a>Example itinerary</a><a>Concierge</a>
+            </div>
+            <div>
+              <div className="mono mute" style={{marginBottom: 10}}>Built with</div>
+              <a>Next.js 16</a><a>Tailwind v4</a><a>Groq · Llama 3.3</a>
+            </div>
+            <div>
+              <div className="mono mute" style={{marginBottom: 10}}>Source</div>
+              <a>GitHub</a><a>Design spec</a><a>Changelog</a>
+            </div>
+          </div>
+        </div>
+        <div className="wrap foot-bottom mono mute">
+          © 2026 TravelAI · Crafted in transit · v2.4.1
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+window.Landing = Landing;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/results_sections.jsx">
+// Mock data for the results page — NYC → Lisbon trip
+const MOCK_TRIP = {
+  origin: "New York",
+  destination: "Lisbon",
+  originCode: "JFK",
+  destCode: "LIS",
+  departureDate: "2026-05-12",
+  returnDate: "2026-05-19",
+  oneWay: false,
+  adults: 2,
+  children: 0,
+  budget: 2400,
+  passport: "US",
+  interests: ["food", "culture", "beaches"],
+  nights: 7,
+};
+
+const MOCK_FLIGHTS = [
+  { airline: "TAP Air Portugal", code: "TP204", stops: "Nonstop", dur: "7h 15m", dep: "21:50", arr: "09:05+1", price: 642, co2: 580, from: "JFK", to: "LIS" },
+  { airline: "Delta", code: "DL134", stops: "1 stop · LHR", dur: "11h 40m", dep: "18:30", arr: "10:10+1", price: 698, co2: 720, from: "JFK", to: "LIS" },
+  { airline: "United", code: "UA936", stops: "1 stop · FRA", dur: "12h 25m", dep: "20:15", arr: "12:40+1", price: 714, co2: 760, from: "EWR", to: "LIS" },
+];
+
+const MOCK_HOTELS = [
+  { name: "Memmo Alfama", stars: 4, low: 210, high: 280, neighborhood: "Alfama" },
+  { name: "Valverde Hotel", stars: 5, low: 340, high: 440, neighborhood: "Avenida" },
+  { name: "The Lumiares", stars: 4, low: 260, high: 320, neighborhood: "Bairro Alto" },
+];
+
+const MOCK_ACTIVITIES = {
+  food: [
+    { name: "Time Out Market", type: "Food hall", rating: 4.6, reviews: "42k" },
+    { name: "Cervejaria Ramiro", type: "Seafood", rating: 4.7, reviews: "18k" },
+    { name: "Pastéis de Belém", type: "Bakery · 1837", rating: 4.5, reviews: "68k" },
+    { name: "Taberna da Rua das Flores", type: "Portuguese", rating: 4.6, reviews: "3.2k" },
+    { name: "Cantinho do Avillez", type: "Chef's table", rating: 4.5, reviews: "4.1k" },
+  ],
+  culture: [
+    { name: "Jerónimos Monastery", type: "UNESCO site", rating: 4.7, reviews: "91k" },
+    { name: "MAAT", type: "Contemporary art", rating: 4.3, reviews: "12k" },
+    { name: "Fado in Chiado", type: "Live performance", rating: 4.5, reviews: "2.8k" },
+    { name: "Gulbenkian Museum", type: "Art collection", rating: 4.7, reviews: "14k" },
+  ],
+  beaches: [
+    { name: "Praia do Guincho", type: "Windswept coast · 40 min", rating: 4.6, reviews: "9.1k" },
+    { name: "Cascais Bay", type: "Family beach · 35 min", rating: 4.5, reviews: "22k" },
+    { name: "Costa da Caparica", type: "Long strand · 25 min", rating: 4.4, reviews: "11k" },
+  ],
+};
+
+const MOCK_WEATHER = [
+  { d: "Mon", h: 22, l: 14, rain: 10 }, { d: "Tue", h: 23, l: 15, rain: 0 },
+  { d: "Wed", h: 21, l: 14, rain: 40 }, { d: "Thu", h: 20, l: 13, rain: 60 },
+  { d: "Fri", h: 22, l: 14, rain: 20 }, { d: "Sat", h: 24, l: 16, rain: 0 },
+  { d: "Sun", h: 25, l: 17, rain: 0 },
+];
+
+// ========= FLIGHTS SECTION =========
+const FlightsSection = () => (
+  <section className="sec">
+    <div className="section-head">
+      <div>
+        <div className="kicker">01 · Outbound</div>
+        <h2 className="section-title serif">Flights</h2>
+      </div>
+      <div className="mono mute">3 of 47 results · sorted by price</div>
+    </div>
+
+    <div className="flight-route">
+      <div className="route-point">
+        <div className="serif tabular" style={{fontSize: 32}}>JFK</div>
+        <div className="mono mute">New York</div>
+      </div>
+      <div className="route-line">
+        <div className="route-dash"></div>
+        <IPlane size={16} style={{color:"var(--accent)"}}/>
+        <div className="route-dash"></div>
+      </div>
+      <div className="route-point">
+        <div className="serif tabular" style={{fontSize: 32}}>LIS</div>
+        <div className="mono mute">Lisbon</div>
+      </div>
+      <div className="route-dates">
+        <div className="mono mute">Out</div>
+        <div className="serif tabular">May 12</div>
+      </div>
+      <div className="route-dates">
+        <div className="mono mute">Back</div>
+        <div className="serif tabular">May 19</div>
+      </div>
+    </div>
+
+    <div className="flight-list">
+      {MOCK_FLIGHTS.map((f, i) => (
+        <div key={i} className={"flight-row" + (i === 0 ? " flight-row-best" : "")}>
+          <div className="flight-airline">
+            <div className="airline-mark serif">{f.airline.slice(0,2)}</div>
+            <div>
+              <div style={{fontSize: 14, fontWeight: 500}}>{f.airline}</div>
+              <div className="mono mute">{f.code}</div>
+            </div>
+          </div>
+          <div className="flight-times">
+            <div className="serif tabular" style={{fontSize: 22}}>{f.dep}</div>
+            <div className="mono mute">{f.from}</div>
+          </div>
+          <div className="flight-dur">
+            <div className="mono mute" style={{fontSize: 10}}>{f.dur}</div>
+            <div className="dur-line"></div>
+            <div className="mono mute" style={{fontSize: 10}}>{f.stops}</div>
+          </div>
+          <div className="flight-times">
+            <div className="serif tabular" style={{fontSize: 22}}>{f.arr}</div>
+            <div className="mono mute">{f.to}</div>
+          </div>
+          <div className="flight-co2" title="CO₂ per passenger">
+            <ILeaf size={13}/>
+            <span className="mono tabular">{f.co2}kg</span>
+          </div>
+          <div className="flight-price">
+            <div className="serif tabular" style={{fontSize: 26}}>${f.price}</div>
+            <button className="btn-link mono">Book <IExternal size={11}/></button>
+          </div>
+          {i === 0 && <div className="best-ribbon mono">Best value</div>}
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+// ========= HOTELS =========
+const HotelsSection = () => (
+  <section className="sec">
+    <div className="section-head">
+      <div>
+        <div className="kicker">02 · Where to stay</div>
+        <h2 className="section-title serif">Hotels</h2>
+      </div>
+      <div className="mono mute">7 nights · 2 travelers</div>
+    </div>
+
+    <div className="hotel-grid">
+      {MOCK_HOTELS.map((h,i) => (
+        <div key={i} className="hotel-card">
+          <div className="photo hotel-photo" data-label="Hotel photo"></div>
+          <div className="hotel-body">
+            <div className="mono mute">{h.neighborhood}</div>
+            <div className="serif" style={{fontSize: 22, marginTop: 4}}>{h.name}</div>
+            <div className="stars">
+              {"★".repeat(h.stars)}<span style={{opacity:.25}}>{"★".repeat(5-h.stars)}</span>
+            </div>
+            <div className="hr"></div>
+            <div className="hotel-price">
+              <div>
+                <div className="mono mute">Per night</div>
+                <div className="serif tabular" style={{fontSize: 22}}>${h.low}–${h.high}</div>
+              </div>
+              <button className="btn-link mono">View <IExternal size={11}/></button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+// ========= ACTIVITIES =========
+const ActivitiesSection = () => {
+  const [expanded, setExpanded] = React.useState({});
+  const labels = { food: "Food", culture: "Culture", beaches: "Beaches" };
+  return (
+    <section className="sec">
+      <div className="section-head">
+        <div>
+          <div className="kicker">03 · Things to do</div>
+          <h2 className="section-title serif">Activities</h2>
+        </div>
+        <div className="mono mute">Matched to your interests · via Google Maps</div>
+      </div>
+
+      {Object.keys(MOCK_ACTIVITIES).map(cat => {
+        const items = MOCK_ACTIVITIES[cat];
+        const isOpen = expanded[cat];
+        const shown = isOpen ? items : items.slice(0, 3);
+        return (
+          <div key={cat} className="act-cat">
+            <div className="act-cat-head">
+              <h3 className="serif" style={{fontSize: 22}}>{labels[cat]}</h3>
+              {items.length > 3 && (
+                <button className="btn-link mono" onClick={() => setExpanded(e => ({...e, [cat]: !isOpen}))}>
+                  {isOpen ? "Show less" : `Show all ${items.length}`}
+                </button>
+              )}
+            </div>
+            <div className="act-list">
+              {shown.map((a,i) => (
+                <div key={i} className="act-item">
+                  <div className="act-index mono">{String(i+1).padStart(2,"0")}</div>
+                  <div style={{flex: 1}}>
+                    <div style={{fontSize: 15, fontWeight: 500}}>{a.name}</div>
+                    <div className="mono mute">{a.type}</div>
+                  </div>
+                  <div className="act-rating">
+                    <span className="serif tabular" style={{fontSize: 18}}>{a.rating}</span>
+                    <span className="mono mute">{a.reviews}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+      <div className="mono mute" style={{fontStyle:"italic", marginTop: 12}}>
+        Note: results may skew toward popular categories.
+      </div>
+    </section>
+  );
+};
+
+// ========= VISA =========
+const VisaSection = () => (
+  <section className="sec-sm">
+    <div className="sec-sm-head">
+      <div className="kicker">Visa</div>
+      <IShield size={14} style={{color:"var(--ink-4)"}}/>
+    </div>
+    <div className="visa-body">
+      <div className="visa-badge">
+        <div className="visa-dot" style={{background:"var(--go)"}}></div>
+        <span className="mono">Visa free</span>
+      </div>
+      <div className="serif" style={{fontSize: 22, marginTop: 12, lineHeight: 1.3}}>
+        US passport holders enter Portugal visa-free for up to <span className="tabular">90 days</span>.
+      </div>
+      <div className="hr"></div>
+      <div className="visa-meta">
+        <div><div className="mono mute">Passport</div><div>🇺🇸 United States</div></div>
+        <div><div className="mono mute">Destination</div><div>🇵🇹 Portugal</div></div>
+      </div>
+      <a className="btn-link mono" style={{marginTop: 12}}>Embassy source <IExternal size={11}/></a>
+    </div>
+  </section>
+);
+
+// ========= COST =========
+const CostSection = () => {
+  const flights = 1284; const hotels = 1890; const daily = 1260;
+  const total = flights + hotels + daily;
+  return (
+    <section className="sec-sm card-ink">
+      <div className="sec-sm-head">
+        <div className="kicker" style={{color:"color-mix(in oklch, var(--paper) 55%, transparent)"}}>Estimate</div>
+        <IWallet size={14} style={{color:"color-mix(in oklch, var(--paper) 55%, transparent)"}}/>
+      </div>
+      <div className="serif tabular" style={{fontSize: 56, lineHeight: 1, marginTop: 16}}>
+        ${total.toLocaleString()}
+      </div>
+      <div className="mono" style={{color:"color-mix(in oklch, var(--paper) 60%, transparent)", marginTop: 6}}>
+        Total · 2 travelers · 7 nights
+      </div>
+      <div className="hr hr-ink" style={{marginTop: 22}}></div>
+      {[
+        ["Flights", "$642 × 2", flights],
+        ["Hotels", "$270 × 7 × 2", hotels],
+        ["Daily · food, transit, play", "$90 × 7 × 2", daily],
+      ].map(r => (
+        <div key={r[0]} className="cost-row">
+          <div>
+            <div style={{fontSize: 14}}>{r[0]}</div>
+            <div className="mono" style={{color:"color-mix(in oklch, var(--paper) 50%, transparent)"}}>{r[1]}</div>
+          </div>
+          <div className="serif tabular" style={{fontSize: 20}}>${r[2].toLocaleString()}</div>
+        </div>
+      ))}
+    </section>
+  );
+};
+
+// ========= WEATHER =========
+const WeatherSection = () => {
+  const max = 30;
+  return (
+    <section className="sec-sm">
+      <div className="sec-sm-head">
+        <div className="kicker">Weather</div>
+        <ICloud size={14} style={{color:"var(--ink-4)"}}/>
+      </div>
+      <div style={{display:"flex", gap: 18, alignItems:"baseline", marginTop: 10}}>
+        <div>
+          <div className="serif tabular" style={{fontSize: 44, lineHeight:1}}>22°<span style={{fontSize: 22, color:"var(--ink-3)"}}>/14°</span></div>
+          <div className="mono mute">Avg high/low · °C</div>
+        </div>
+        <div style={{marginLeft:"auto", textAlign:"right"}}>
+          <div className="serif tabular" style={{fontSize: 28}}>18%</div>
+          <div className="mono mute">Rainy days</div>
+        </div>
+      </div>
+      <div className="weather-chart">
+        {MOCK_WEATHER.map((w,i) => (
+          <div key={i} className="wx-col">
+            <div className="wx-bar-wrap">
+              <div className="wx-bar-high" style={{height: `${(w.h/max)*100}%`}}></div>
+              <div className="wx-bar-low" style={{height: `${(w.l/max)*100}%`}}></div>
+              {w.rain > 30 && <div className="wx-rain" title={`${w.rain}% rain`}></div>}
+            </div>
+            <div className="mono mute" style={{fontSize: 10, marginTop: 6}}>{w.d}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mono mute" style={{fontSize: 10, fontStyle:"italic"}}>
+        Historical · same week, 2025 · Open-Meteo
+      </div>
+    </section>
+  );
+};
+
+// ========= CURRENCY =========
+const CurrencySection = () => (
+  <section className="sec-sm">
+    <div className="sec-sm-head">
+      <div className="kicker">Currency</div>
+      <ICoin size={14} style={{color:"var(--ink-4)"}}/>
+    </div>
+    <div className="curr-main">
+      <div>
+        <div className="mono mute">1 USD</div>
+        <div className="serif tabular" style={{fontSize: 36}}>€0.92</div>
+      </div>
+      <div style={{textAlign:"right"}}>
+        <div className="mono mute">Your budget</div>
+        <div className="serif tabular" style={{fontSize: 24}}>€2,208</div>
+      </div>
+    </div>
+    <div className="hr"></div>
+    <div className="curr-ref">
+      {[[50,46],[100,92],[200,184],[500,460]].map(([u,e]) => (
+        <div key={u} className="curr-ref-row">
+          <span className="mono tabular">${u}</span>
+          <span className="serif tabular">€{e}</span>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+Object.assign(window, {
+  MOCK_TRIP, FlightsSection, HotelsSection, ActivitiesSection,
+  VisaSection, CostSection, WeatherSection, CurrencySection
+});
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/results.jsx">
+const Results = () => {
+  return (
+    <div className="results">
+      {/* Trip bar */}
+      <div className="trip-bar">
+        <div className="wrap trip-bar-inner">
+          <div className="trip-route">
+            <span className="mono mute">From</span>
+            <span className="serif" style={{fontSize: 20}}>New York</span>
+            <IArrowRight size={14} style={{color:"var(--accent)"}}/>
+            <span className="serif" style={{fontSize: 20}}>Lisbon</span>
+          </div>
+          <div className="trip-meta mono mute">
+            <span>May 12 – May 19, 2026</span>
+            <span>·</span>
+            <span>2 travelers</span>
+            <span>·</span>
+            <span>7 nights</span>
+          </div>
+          <a className="btn-link mono"><IArrowLeft size={12}/> New search</a>
+        </div>
+      </div>
+
+      {/* Trip header */}
+      <div className="wrap trip-header">
+        <div className="trip-header-left">
+          <div className="eyebrow">Your itinerary · LIS—26—052</div>
+          <h1 className="trip-title serif">
+            Seven nights in <em>Lisbon</em>.
+          </h1>
+          <p className="trip-desc mute">
+            A spring plan composed from live flights, hotel rates, historical weather,
+            and places matched to food, culture, and beaches. Edit anything — changes
+            reflow instantly.
+          </p>
+          <div className="trip-chips">
+            {["Food","Culture","Beaches"].map(c => (
+              <span key={c} className="trip-chip mono">{c}</span>
+            ))}
+          </div>
+        </div>
+        <div className="trip-header-right">
+          <div className="photo trip-hero" data-label="Lisbon · rooftops at golden hour"></div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="wrap trip-grid">
+        <div className="trip-main">
+          <FlightsSection />
+          <HotelsSection />
+          <ActivitiesSection />
+        </div>
+        <aside className="trip-side">
+          <VisaSection />
+          <CostSection />
+          <WeatherSection />
+          <CurrencySection />
+        </aside>
+      </div>
+    </div>
+  );
+};
+
+window.Results = Results;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/chatbot.jsx">
+const Chatbot = ({ open, onClose, onOpen }) => {
+  const [msgs, setMsgs] = React.useState([
+    { from: "ai", text: "Hello — I've loaded your Lisbon trip. Ask me anything about flights, neighborhoods, reservations, or timing." },
+    { from: "user", text: "What's the best neighborhood for a first trip?" },
+    { from: "ai", text: "For a first visit I'd suggest Chiado or Baixa — central, walkable, and close to most of what you've saved. Alfama is the most atmospheric (fado bars, tiled lanes) but the hills are steep. If you want nightlife after dinner, base yourself in Bairro Alto." },
+  ]);
+  const [input, setInput] = React.useState("");
+
+  if (!open) {
+    return (
+      <button className="chat-fab" onClick={onOpen} aria-label="Open concierge">
+        <ISparkle size={20}/>
+      </button>
+    );
+  }
+
+  const send = () => {
+    if (!input.trim()) return;
+    setMsgs(m => [...m, { from: "user", text: input }]);
+    setInput("");
+    setTimeout(() => setMsgs(m => [...m, { from: "ai", text: "Let me check that against your itinerary…" }]), 400);
+  };
+
+  return (
+    <div className="chat-panel open">
+      <div className="chat-header">
+        <div className="chat-header-mark"><ISparkle size={14}/></div>
+        <div>
+          <div className="serif" style={{fontSize: 18}}>Concierge</div>
+          <div className="mono mute" style={{fontSize: 10}}>Llama 3.3 · trip context loaded</div>
+        </div>
+        <button className="icon-btn" onClick={onClose} style={{marginLeft:"auto"}}><IClose size={14}/></button>
+      </div>
+      <div className="chat-body">
+        {msgs.map((m,i) => (
+          <div key={i} className={"chat-msg chat-" + m.from}>
+            {m.from === "ai" && <div className="chat-avatar mono">AI</div>}
+            <div className="chat-bubble">{m.text}</div>
+          </div>
+        ))}
+      </div>
+      <div className="chat-input-row">
+        <input className="chat-input" placeholder="Ask about Lisbon…"
+               value={input}
+               onChange={e => setInput(e.target.value)}
+               onKeyDown={e => e.key === "Enter" && send()}/>
+        <button className="chat-send" onClick={send}><ISend size={14}/></button>
+      </div>
+    </div>
+  );
+};
+
+window.Chatbot = Chatbot;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="components/tweaks.jsx">
+const ACCENTS = {
+  sunset:  "oklch(62% 0.18 38)",
+  rose:    "oklch(62% 0.18 15)",
+  forest:  "oklch(52% 0.12 155)",
+  cobalt:  "oklch(52% 0.18 255)",
+  ochre:   "oklch(70% 0.14 80)",
+};
+
+const Tweaks = ({ open, onClose, tweaks, setTweaks }) => {
+  const update = (k, v) => setTweaks(t => ({...t, [k]: v}));
+  return (
+    <div className={"tweaks-panel" + (open ? " open" : "")}>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: 12}}>
+        <div className="serif" style={{fontSize: 20}}>Tweaks</div>
+        <button className="icon-btn" onClick={onClose} style={{width: 28, height: 28}}><IClose size={12}/></button>
+      </div>
+
+      <div className="tweaks-row">
+        <label>Accent</label>
+        <div className="tweaks-swatches">
+          {Object.keys(ACCENTS).map(k => (
+            <button key={k} className={"tweaks-swatch" + (tweaks.accent === k ? " on" : "")}
+                    style={{background: ACCENTS[k]}}
+                    onClick={() => update("accent", k)}/>
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks-row">
+        <label>Density</label>
+        <div className="tweaks-mini">
+          {["airy","comfortable","compact"].map(d => (
+            <button key={d} className={tweaks.density === d ? "on" : ""}
+                    onClick={() => update("density", d)}>{d}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks-row">
+        <label>Radius</label>
+        <div className="tweaks-mini">
+          {["sharp","rounded","soft"].map(r => (
+            <button key={r} className={tweaks.radius === r ? "on" : ""}
+                    onClick={() => update("radius", r)}>{r}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks-row">
+        <label>Hero</label>
+        <div className="tweaks-mini">
+          {["gradient","photo","grid"].map(r => (
+            <button key={r} className={tweaks.hero === r ? "on" : ""}
+                    onClick={() => update("hero", r)}>{r}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks-row">
+        <label>View</label>
+        <div className="tweaks-mini">
+          {["landing","results"].map(r => (
+            <button key={r} className={tweaks.view === r ? "on" : ""}
+                    onClick={() => update("view", r)}>{r}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+window.Tweaks = Tweaks;
+window.ACCENTS = ACCENTS;
+
+</script>
+<script type="text/babel" data-presets="react" data-src="app.jsx">
+const { useState, useEffect } = React;
+
+function App() {
+  const [tweaks, setTweaks] = useState(() => ({
+    ...window.TRAVELAI_TWEAKS,
+    ...(JSON.parse(localStorage.getItem("travelai-tweaks") || "{}"))
+  }));
+  const [theme, setTheme] = useState(() => localStorage.getItem("travelai-theme") || "light");
+  const [view, setView] = useState(() => localStorage.getItem("travelai-view") || tweaks.view || "landing");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("travelai-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("travelai-view", view);
+  }, [view]);
+
+  useEffect(() => {
+    // Apply tweaks
+    const root = document.documentElement;
+    root.style.setProperty("--accent", window.ACCENTS[tweaks.accent] || window.ACCENTS.sunset);
+    root.style.setProperty("--density",
+      tweaks.density === "compact" ? "0.82" :
+      tweaks.density === "airy" ? "1.15" : "1");
+    root.style.setProperty("--r",
+      tweaks.radius === "sharp" ? "3px" :
+      tweaks.radius === "soft" ? "22px" : "14px");
+    root.style.setProperty("--r-lg",
+      tweaks.radius === "sharp" ? "4px" :
+      tweaks.radius === "soft" ? "28px" : "20px");
+    root.style.setProperty("--r-sm",
+      tweaks.radius === "sharp" ? "2px" :
+      tweaks.radius === "soft" ? "12px" : "8px");
+
+    localStorage.setItem("travelai-tweaks", JSON.stringify(tweaks));
+    try {
+      window.parent.postMessage({type: "__edit_mode_set_keys", edits: tweaks}, "*");
+    } catch(e) {}
+
+    if (tweaks.view && tweaks.view !== view) setView(tweaks.view);
+  }, [tweaks]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.data) return;
+      if (e.data.type === "__activate_edit_mode") setTweaksOpen(true);
+      if (e.data.type === "__deactivate_edit_mode") setTweaksOpen(false);
+    };
+    window.addEventListener("message", handler);
+    try { window.parent.postMessage({type: "__edit_mode_available"}, "*"); } catch(e) {}
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const onPlan = () => setView("results");
+
+  return (
+    <>
+      <Nav view={view} setView={setView} theme={theme} setTheme={setTheme}
+           openTweaks={() => setTweaksOpen(o => !o)} />
+      {view === "landing" ? (
+        <Landing onPlan={onPlan} tweaks={tweaks} />
+      ) : (
+        <Results />
+      )}
+      <Chatbot open={chatOpen}
+               onOpen={() => setChatOpen(true)}
+               onClose={() => setChatOpen(false)} />
+      <Tweaks open={tweaksOpen} onClose={() => setTweaksOpen(false)}
+              tweaks={tweaks} setTweaks={setTweaks} />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+
+</body>
+</html>
