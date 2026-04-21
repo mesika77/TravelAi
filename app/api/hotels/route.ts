@@ -3,7 +3,7 @@ import { fetchHotels } from '@/lib/xotelo'
 import { rateLimit } from '@/lib/ratelimit'
 
 export async function GET(req: NextRequest) {
-  const limited = rateLimit(req, 10, 60 * 60 * 1000)
+  const limited = rateLimit(req, 60, 60 * 60 * 1000)
   if (limited) return limited
 
   const { searchParams } = req.nextUrl

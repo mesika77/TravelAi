@@ -11,21 +11,16 @@ const INTEREST_QUERIES: Record<string, string> = {
   beaches: 'beaches',
 }
 
-export async function fetchActivities(
+const RESULTS_PER_INTEREST = 6
+
+async function fetchForInterest(
   lat: number,
   lon: number,
-  interests: string[]
+  interest: string,
+  key: string
 ): Promise<Activity[]> {
-  const key = process.env.SERPAPI_KEY
-  if (!key) throw new Error('SERPAPI_KEY_MISSING')
-
-  const queries = interests
-    .map((i) => INTEREST_QUERIES[i])
-    .filter(Boolean)
-
-  if (queries.length === 0) return []
-
-  const query = queries.join(', ')
+  const query = INTEREST_QUERIES[interest]
+  if (!query) return []
 
   const url = new URL('https://serpapi.com/search')
   url.searchParams.set('engine', 'google_maps')
@@ -41,22 +36,28 @@ export async function fetchActivities(
   const data = await res.json()
   const results = (data.local_results ?? []) as Record<string, unknown>[]
 
-  return results.slice(0, 9).map((place, i) => {
-    const placeInterest =
-      interests.find((interest) => {
-        const q = INTEREST_QUERIES[interest] ?? ''
-        const type = String(place.type ?? '').toLowerCase()
-        return q.split(' ').some((word) => type.includes(word))
-      }) ?? interests[0]
+  return results.slice(0, RESULTS_PER_INTEREST).map((place, i) => ({
+    id: `${interest}-${String(place.place_id ?? place.data_id ?? i)}`,
+    name: String(place.title ?? ''),
+    category: String(place.type ?? query),
+    address: String(place.address ?? ''),
+    distance: undefined,
+    rating: place.rating ? Number(place.rating) : undefined,
+    interest,
+  }))
+}
 
-    return {
-      id: String(place.place_id ?? place.data_id ?? i),
-      name: String(place.title ?? ''),
-      category: String(place.type ?? 'Place'),
-      address: String(place.address ?? ''),
-      distance: undefined,
-      rating: place.rating ? Number(place.rating) : undefined,
-      interest: placeInterest,
-    }
-  })
+export async function fetchActivities(
+  lat: number,
+  lon: number,
+  interests: string[]
+): Promise<Activity[]> {
+  const key = process.env.SERPAPI_KEY
+  if (!key) throw new Error('SERPAPI_KEY_MISSING')
+
+  const results = await Promise.all(
+    interests.map((interest) => fetchForInterest(lat, lon, interest, key))
+  )
+
+  return results.flat()
 }
