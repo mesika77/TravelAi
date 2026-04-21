@@ -20,7 +20,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   const departure = new Date(tripParams.departureDate)
   const returnDate = new Date(tripParams.returnDate)
-  const nights = Math.max(1, Math.round((returnDate.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
+  const nights = tripParams.oneWay ? 0 : Math.max(1, Math.round((returnDate.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
 
   const formatDate = (d: Date) =>
     d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -42,7 +42,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               {tripParams.destination}
             </span>
             <span className="hidden sm:block text-sm" style={{ color: 'var(--text-muted)' }}>
-              {formatDate(departure)} – {formatDate(returnDate)} · {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}
+              {formatDate(departure)}{!tripParams.oneWay && ` – ${formatDate(returnDate)}`} · {tripParams.oneWay ? 'One Way · ' : ''}{totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}
             </span>
           </div>
           <Link

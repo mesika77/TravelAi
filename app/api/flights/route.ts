@@ -11,13 +11,14 @@ export async function GET(req: NextRequest) {
   const destination = searchParams.get('destination')
   const departureDate = searchParams.get('departureDate')
   const returnDate = searchParams.get('returnDate')
+  const oneWay = searchParams.get('oneWay') === 'true'
 
-  if (!origin || !destination || !departureDate || !returnDate) {
-    return NextResponse.json({ error: 'Missing required params: origin, destination, departureDate, returnDate' }, { status: 400 })
+  if (!origin || !destination || !departureDate) {
+    return NextResponse.json({ error: 'Missing required params: origin, destination, departureDate' }, { status: 400 })
   }
 
   try {
-    const flights = await fetchFlights(origin, destination, departureDate, returnDate)
+    const flights = await fetchFlights(origin, destination, departureDate, returnDate ?? '', oneWay)
     return NextResponse.json({ flights })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'

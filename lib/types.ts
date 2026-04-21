@@ -3,6 +3,7 @@ export interface TripParams {
   destination: string
   departureDate: string
   returnDate: string
+  oneWay?: boolean
   adults: number
   children: number
   budget: number

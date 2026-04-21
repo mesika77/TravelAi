@@ -55,6 +55,7 @@ const COUNTRIES = [
 export default function SearchForm() {
   const router = useRouter()
   const [step, setStep] = useState(0)
+  const [oneWay, setOneWay] = useState(false)
   const [form, setForm] = useState<Partial<TripParams>>({
     adults: 1,
     children: 0,
@@ -75,7 +76,8 @@ export default function SearchForm() {
       origin: form.origin ?? '',
       destination: form.destination ?? '',
       departureDate: form.departureDate ?? '',
-      returnDate: form.returnDate ?? '',
+      returnDate: oneWay ? (form.departureDate ?? '') : (form.returnDate ?? ''),
+      oneWay,
       adults: form.adults ?? 1,
       children: form.children ?? 0,
       budget: form.budget ?? 2000,
@@ -86,7 +88,7 @@ export default function SearchForm() {
     router.push(`/trip/${id}`)
   }
 
-  const canNext0 = form.origin && form.destination && form.departureDate && form.returnDate
+  const canNext0 = form.origin && form.destination && form.departureDate && (oneWay || form.returnDate)
   const canNext1 = (form.adults ?? 0) > 0 && (form.budget ?? 0) > 0
   const canSubmit = canNext1 && form.passport && (form.interests?.length ?? 0) > 0
 
@@ -135,11 +137,33 @@ export default function SearchForm() {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="flex flex-col gap-4"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Plane size={18} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-                <span className="font-semibold text-lg" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-                  Where are you going?
-                </span>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Plane size={18} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
+                  <span className="font-semibold text-lg" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
+                    Where are you going?
+                  </span>
+                </div>
+                <div className="flex items-center rounded-lg overflow-hidden text-xs font-medium" style={{ border: '1px solid var(--border)' }}>
+                  {['Round Trip', 'One Way'].map((label) => {
+                    const isOne = label === 'One Way'
+                    const active = oneWay === isOne
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setOneWay(isOne)}
+                        className="px-3 py-1.5 transition-all duration-200"
+                        style={{
+                          background: active ? 'var(--accent)' : 'transparent',
+                          color: active ? 'white' : 'var(--text-muted)',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <CityAutocomplete
@@ -155,7 +179,7 @@ export default function SearchForm() {
                   onChange={(val) => set('destination', val)}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${oneWay ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
                   <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>Departure</label>
                   <input
@@ -166,16 +190,18 @@ export default function SearchForm() {
                     className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>Return</label>
-                  <input
-                    type="date"
-                    value={form.returnDate ?? ''}
-                    onChange={(e) => set('returnDate', e.target.value)}
-                    style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                    className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                  />
-                </div>
+                {!oneWay && (
+                  <div>
+                    <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>Return</label>
+                    <input
+                      type="date"
+                      value={form.returnDate ?? ''}
+                      onChange={(e) => set('returnDate', e.target.value)}
+                      style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                      className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    />
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => goTo(1)}

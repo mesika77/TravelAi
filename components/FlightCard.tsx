@@ -38,7 +38,7 @@ export default function FlightCard() {
     setError(null)
     try {
       const res = await fetch(
-        `/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}`
+        `/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}&oneWay=${params.oneWay ?? false}`
       )
       const data = await res.json()
       if (!res.ok) {
@@ -58,7 +58,7 @@ export default function FlightCard() {
   return (
     <section>
       <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        ✈️ Flights
+        ✈️ Flights {params.oneWay && <span className="text-sm font-normal ml-1" style={{ color: 'var(--text-muted)' }}>· One Way</span>}
       </h2>
       {loading && <Skeleton />}
       {error && !loading && (

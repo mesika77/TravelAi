@@ -37,7 +37,7 @@ function Nav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl" style={{ fontFamily: 'var(--font-playfair)' }}>
           <Plane size={20} style={{ color: 'var(--accent)' }} />
-          <span style={{ color: 'var(--text)' }}>TravelAI</span>
+          <span style={{ color: scrolled ? 'var(--text)' : 'white' }}>TravelAI</span>
         </Link>
         <ThemeToggle />
       </div>

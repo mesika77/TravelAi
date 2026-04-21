@@ -50,7 +50,8 @@ export async function fetchFlights(
   origin: string,
   destination: string,
   outboundDate: string,
-  returnDate: string
+  returnDate: string,
+  oneWay = false
 ): Promise<FlightOffer[]> {
   const key = process.env.SERPAPI_KEY
   if (!key) throw new Error('SERPAPI_KEY_MISSING')
@@ -63,7 +64,8 @@ export async function fetchFlights(
   url.searchParams.set('departure_id', originIata)
   url.searchParams.set('arrival_id', destIata)
   url.searchParams.set('outbound_date', outboundDate)
-  url.searchParams.set('return_date', returnDate)
+  url.searchParams.set('type', oneWay ? '2' : '1')
+  if (!oneWay && returnDate) url.searchParams.set('return_date', returnDate)
   url.searchParams.set('currency', 'USD')
   url.searchParams.set('hl', 'en')
   url.searchParams.set('api_key', key)
