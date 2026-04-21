@@ -1,26 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { MapPin, ExternalLink, RefreshCw } from 'lucide-react'
+import { RefreshCw, ExternalLink } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { Activity } from '@/lib/types'
 
-function Skeleton() {
+const PREVIEW_COUNT = 3
+
+function SkeletonItem() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="card flex flex-col gap-2">
-          <div className="shimmer h-5 w-2/3 rounded" />
-          <div className="shimmer h-4 w-1/2 rounded" />
-          <div className="shimmer h-4 w-3/4 rounded" />
-        </div>
-      ))}
+    <div className="act-item" style={{ opacity: 0.5 }}>
+      <div className="act-index shimmer" style={{ width: 28, height: 14, borderRadius: 4 }} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="shimmer" style={{ height: 14, width: '60%', borderRadius: 4 }} />
+        <div className="shimmer" style={{ height: 10, width: '40%', borderRadius: 4 }} />
+      </div>
     </div>
   )
 }
-
-const PREVIEW_COUNT = 3
 
 export default function ActivityCard() {
   const { params } = useTripContext()
@@ -31,24 +28,16 @@ export default function ActivityCard() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
-    setMissingKey(false)
+    setLoading(true); setError(null); setMissingKey(false)
     try {
       const res = await fetch(
         `/api/activities?city=${encodeURIComponent(params.destination)}&interests=${params.interests.join(',')}`
       )
       const data = await res.json()
-      if (!res.ok) {
-        if (data.key) setMissingKey(true)
-        throw new Error(data.error ?? 'Failed to load activities')
-      }
+      if (!res.ok) { if (data.key) setMissingKey(true); throw new Error(data.error ?? 'Failed') }
       setActivities(data.activities)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load activities')
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed to load activities') }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -60,103 +49,108 @@ export default function ActivityCard() {
   }, {})
 
   return (
-    <section>
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <h2 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-          🗺 Activities
-        </h2>
-        <p className="text-xs mt-1 text-right" style={{ color: 'var(--text-muted)' }}>
-          Results may skew toward popular categories
-        </p>
+    <section className="sec">
+      <div className="section-head">
+        <div>
+          <div className="kicker">03 · Things to do</div>
+          <h2 className="section-title serif">Activities</h2>
+        </div>
+        <div className="mono mute">Matched to your interests</div>
       </div>
-      {loading && <Skeleton />}
+
+      {loading && (
+        <div>
+          {[0, 1, 2].map((cat) => (
+            <div key={cat} className="act-cat">
+              <div className="act-cat-head">
+                <div className="shimmer" style={{ height: 18, width: 100, borderRadius: 4 }} />
+              </div>
+              <div className="act-list">
+                <SkeletonItem /><SkeletonItem /><SkeletonItem />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {error && !loading && (
-        <div className="card flex flex-col gap-3">
+        <div className="sec-sm" style={{ textAlign: 'center', padding: '32px 22px' }}>
           {missingKey ? (
             <>
-              <p className="font-semibold" style={{ color: 'var(--text)' }}>Foursquare key not configured</p>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Add <code className="px-1 rounded text-xs" style={{ background: 'var(--surface-2)' }}>FOURSQUARE_API_KEY</code> to{' '}
-                <code>.env.local</code>. Get a key at{' '}
-                <a href="https://foursquare.com/developers" target="_blank" rel="noopener noreferrer" className="underline">
-                  foursquare.com/developers
-                </a>.
-              </p>
+              <p style={{ fontWeight: 500 }}>SerpAPI key not configured</p>
+              <p className="mono mute" style={{ marginTop: 8 }}>Add SERPAPI_KEY to .env.local</p>
             </>
           ) : (
             <>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error}</p>
-              <button onClick={load} className="btn-secondary flex items-center gap-2 w-fit">
-                <RefreshCw size={14} /> Retry
+              <p className="mute" style={{ fontSize: 14 }}>{error}</p>
+              <button onClick={load} className="btn-link" style={{ marginTop: 12 }}>
+                <RefreshCw size={12} /> Retry
               </button>
             </>
           )}
         </div>
       )}
+
       {!loading && !error && activities.length === 0 && (
-        <div className="card text-center py-6">
-          <p style={{ color: 'var(--text-muted)' }}>No activities found.</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Try selecting different interests.</p>
+        <div className="sec-sm" style={{ textAlign: 'center', padding: '40px 22px' }}>
+          <p className="mute">No activities found.</p>
+          <p className="mono mute" style={{ marginTop: 6 }}>Try selecting different interests.</p>
         </div>
       )}
-      {!loading && Object.entries(grouped).map(([interest, items]) => {
-        const isExpanded = expanded[interest]
-        const visible = isExpanded ? items : items.slice(0, PREVIEW_COUNT)
+
+      {!loading && !error && Object.entries(grouped).map(([interest, items]) => {
+        const isOpen = expanded[interest]
+        const shown = isOpen ? items : items.slice(0, PREVIEW_COUNT)
         const hasMore = items.length > PREVIEW_COUNT
+        const label = interest.charAt(0).toUpperCase() + interest.slice(1)
+
         return (
-          <div key={interest} className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-sm font-semibold capitalize" style={{ color: 'var(--text-muted)' }}>
-                {interest}
-              </h3>
+          <div key={interest} className="act-cat">
+            <div className="act-cat-head">
+              <h3 className="serif" style={{ fontSize: 22 }}>{label}</h3>
               {hasMore && (
                 <button
-                  onClick={() => setExpanded(prev => ({ ...prev, [interest]: !prev[interest] }))}
-                  className="text-xs flex items-center gap-1 transition-opacity hover:opacity-70"
-                  style={{ color: 'var(--accent)' }}
+                  className="btn-link"
+                  onClick={() => setExpanded((e) => ({ ...e, [interest]: !e[interest] }))}
                 >
-                  {isExpanded ? 'Show less' : `Show all ${items.length}`}
+                  {isOpen ? 'Show less' : `Show all ${items.length}`}
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {visible.map((a, i) => (
-                <motion.div
-                  key={a.id}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  whileHover={{ scale: 1.02, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
-                  className="card flex flex-col gap-2"
-                >
-                  <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{a.name}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{a.category}</p>
-                  {a.address && (
-                    <div className="flex items-start gap-1">
-                      <MapPin size={12} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{a.address}</p>
-                    </div>
-                  )}
-                  {a.distance && (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {a.distance < 1000 ? `${a.distance}m away` : `${(a.distance / 1000).toFixed(1)}km away`}
-                    </p>
-                  )}
-                  <a
-                    href={`https://www.google.com/maps/search/${encodeURIComponent(a.name + ' ' + params.destination)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs mt-auto"
-                    style={{ color: 'var(--info)' }}
-                  >
-                    View on Maps <ExternalLink size={11} strokeWidth={1.5} />
-                  </a>
-                </motion.div>
+            <div className="act-list">
+              {shown.map((a, i) => (
+                <div key={a.id} className="act-item">
+                  <div className="act-index mono">{String(i + 1).padStart(2, '0')}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 500 }}>{a.name}</div>
+                    <div className="mono mute">{a.category}</div>
+                  </div>
+                  <div className="act-rating">
+                    {a.rating && (
+                      <span className="serif tabular" style={{ fontSize: 17 }}>{a.rating}</span>
+                    )}
+                    <a
+                      href={`https://www.google.com/maps/search/${encodeURIComponent(a.name + ' ' + params.destination)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-link"
+                      style={{ fontSize: 9 }}
+                    >
+                      Maps <ExternalLink size={9} />
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         )
       })}
+
+      {!loading && activities.length > 0 && (
+        <p className="mono mute" style={{ fontStyle: 'italic', marginTop: 12, fontSize: 11 }}>
+          Results may skew toward popular categories.
+        </p>
+      )}
     </section>
   )
 }

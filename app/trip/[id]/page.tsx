@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { decodeTripId } from '@/lib/encode'
 import { TripContextProvider } from '@/components/TripContextProvider'
 import FlightCard from '@/components/FlightCard'
@@ -15,68 +15,89 @@ import ChatBot from '@/components/ChatBot'
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const tripParams = decodeTripId(id)
-
   if (!tripParams) notFound()
 
   const departure = new Date(tripParams.departureDate)
   const returnDate = new Date(tripParams.returnDate)
-  const nights = tripParams.oneWay ? 0 : Math.max(1, Math.round((returnDate.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
+  const nights = tripParams.oneWay
+    ? 0
+    : Math.max(1, Math.round((returnDate.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
 
-  const formatDate = (d: Date) =>
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const fmtShort = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const fmtBar = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   const totalTravelers = tripParams.adults + tripParams.children
+  const dest = tripParams.destination
+  const tripLabel = tripParams.oneWay
+    ? `One way to ${dest}`
+    : `${nights} night${nights !== 1 ? 's' : ''} in ${dest}`
+
+  const interests = tripParams.interests.map((i) => i.charAt(0).toUpperCase() + i.slice(1))
 
   return (
     <TripContextProvider params={tripParams} nights={nights}>
-      {/* Sticky top bar */}
-      <div
-        className="sticky top-16 z-40 border-b backdrop-blur-md"
-        style={{ background: 'var(--surface)/90', borderColor: 'var(--border)' }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="font-semibold truncate" style={{ color: 'var(--text)' }}>
-              {tripParams.origin}
-              <span style={{ color: 'var(--accent)' }}> → </span>
-              {tripParams.destination}
-            </span>
-            <span className="hidden sm:block text-sm" style={{ color: 'var(--text-muted)' }}>
-              {formatDate(departure)}{!tripParams.oneWay && ` – ${formatDate(returnDate)}`} · {tripParams.oneWay ? 'One Way · ' : ''}{totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}
-            </span>
+      {/* Trip bar */}
+      <div className="trip-bar">
+        <div className="wrap trip-bar-inner">
+          <div className="trip-route">
+            <span className="mono mute" style={{ fontSize: 10 }}>From</span>
+            <span className="serif" style={{ fontSize: 18 }}>{tripParams.origin}</span>
+            <span style={{ color: 'var(--accent)', fontSize: 14 }}>→</span>
+            <span className="serif" style={{ fontSize: 18 }}>{dest}</span>
           </div>
-          <Link
-            href="/"
-            className="flex items-center gap-1 text-sm flex-shrink-0 transition-all duration-200 hover:opacity-70"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <ArrowLeft size={16} strokeWidth={1.5} />
-            New Search
+          <div className="trip-meta mono mute">
+            <span>{fmtBar(departure)}</span>
+            {!tripParams.oneWay && <><span>–</span><span>{fmtBar(returnDate)}</span></>}
+            <span>·</span>
+            <span>{totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}</span>
+            {!tripParams.oneWay && <><span>·</span><span>{nights} nights</span></>}
+            {tripParams.oneWay && <><span>·</span><span>One Way</span></>}
+          </div>
+          <Link href="/" className="btn-link mono" style={{ fontSize: 10 }}>
+            <ArrowLeft size={11} /> New search
           </Link>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Left column — 60% */}
-          <div className="lg:col-span-3 flex flex-col gap-10">
-            <FlightCard />
-            <HotelCard />
-            <ActivityCard />
-          </div>
-
-          {/* Right column — 40% */}
-          <div className="lg:col-span-2 flex flex-col gap-8">
-            <VisaBadge />
-            <TripCostSummary />
-            <WeatherWidget />
-            <CurrencyWidget />
-          </div>
+      {/* Trip header */}
+      <div className="wrap trip-header">
+        <div className="trip-header-left">
+          <div className="eyebrow">Your itinerary · {dest.slice(0, 3).toUpperCase()}—26</div>
+          <h1 className="trip-title serif">
+            {tripParams.oneWay ? 'One way to' : `${nights === 1 ? 'One night' : `${nights} nights`} in`}{' '}
+            <em>{dest}</em>.
+          </h1>
+          <p className="trip-desc mute">
+            A plan composed from live flights, hotel rates, historical weather, and places matched to your interests.
+          </p>
+          {interests.length > 0 && (
+            <div className="trip-chips">
+              {interests.map((c) => (
+                <span key={c} className="trip-chip">{c}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="trip-header-right">
+          <div className="photo trip-hero" data-label={`${dest} · photography`} />
         </div>
       </div>
 
-      {/* Floating chat */}
+      {/* Trip grid */}
+      <div className="trip-grid">
+        <div className="trip-main">
+          <FlightCard />
+          <HotelCard />
+          <ActivityCard />
+        </div>
+        <aside className="trip-side">
+          <VisaBadge />
+          <TripCostSummary />
+          <WeatherWidget />
+          <CurrencyWidget />
+        </aside>
+      </div>
+
       <ChatBot />
     </TripContextProvider>
   )

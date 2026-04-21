@@ -1,75 +1,172 @@
 import SearchForm from '@/components/SearchForm'
-import { Shield, Plane, Bot, DollarSign } from 'lucide-react'
+import {
+  Plane, Shield, Building2, Cloud, Compass, Coins, Sparkles,
+} from 'lucide-react'
 
-const FEATURES = [
-  { icon: Shield, label: 'Visa Check', desc: 'Instant visa requirements' },
-  { icon: Plane, label: 'Live Flights', desc: 'Real-time Google Flights' },
-  { icon: Bot, label: 'AI Concierge', desc: 'Powered by Llama 3.3' },
-  { icon: DollarSign, label: 'Cost Estimate', desc: 'Full trip budget breakdown' },
+const WHAT_ITEMS = [
+  { n: '01', t: 'Flights', d: 'Real-time Google Flights via SerpAPI. Top three by price, carbon, and time.', Icon: Plane },
+  { n: '02', t: 'Visa', d: 'Travel Buddy AI. Same-country shortcut. Offline CSV fallback.', Icon: Shield },
+  { n: '03', t: 'Hotels', d: 'Xotelo listings with nightly rates for your exact dates.', Icon: Building2 },
+  { n: '04', t: 'Weather', d: 'Historical archive — the same week, last year. No forecast surprises.', Icon: Cloud },
+  { n: '05', t: 'Activities', d: 'Google Maps places scored against your declared interests.', Icon: Compass },
+  { n: '06', t: 'Currency', d: 'Live rates. Your budget, in their pocket.', Icon: Coins },
+  { n: '07', t: 'Concierge', d: 'Llama 3.3 with full trip context loaded. Streams in milliseconds.', Icon: Sparkles },
+]
+
+const DESTINATIONS = [
+  { city: 'Lisbon', country: 'Portugal', temp: '21°', from: 'from $642' },
+  { city: 'Kyoto', country: 'Japan', temp: '19°', from: 'from $1,120' },
+  { city: 'Marrakech', country: 'Morocco', temp: '27°', from: 'from $780' },
+  { city: 'Reykjavík', country: 'Iceland', temp: '11°', from: 'from $520' },
 ]
 
 export default function HomePage() {
   return (
-    <>
-      {/* Hero */}
-      <section className="hero-gradient min-h-screen flex flex-col items-center justify-center relative overflow-hidden pt-16">
-        {/* Animated SVG plane */}
-        <svg
-          className="absolute top-1/4 left-0 right-0 w-full opacity-20 pointer-events-none"
-          height="60"
-          viewBox="0 0 800 60"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            className="plane-path"
-            d="M0 40 Q200 10 400 35 Q600 55 800 20"
-            stroke="#e94560"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          />
-        </svg>
+    <div className="landing">
+      {/* HERO */}
+      <section className="hero hero-gradient">
+        <div className="wrap hero-inner">
+          <div className="hero-left">
+            <div className="eyebrow" style={{ color: 'var(--ink-3)' }}>
+              № 026 · Spring edition · 2026
+            </div>
+            <h1 className="hero-title">
+              A trip,<br />
+              <em className="hero-em">carefully</em> planned<br />
+              in sixty seconds.
+            </h1>
+            <p className="hero-sub">
+              Real-time flights, visa checks, hotels, weather, things to do, and an
+              AI concierge who&apos;s read every guidebook — composed into a single
+              shareable page.
+            </p>
+            <div className="hero-meta">
+              <div className="hero-meta-item">
+                <div className="mono mute">Powered by</div>
+                <div className="serif" style={{ fontSize: 20 }}>Llama 3.3</div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="mono mute">Live data</div>
+                <div className="serif" style={{ fontSize: 20 }}>7 services</div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="mono mute">Plans built</div>
+                <div className="serif tabular" style={{ fontSize: 20 }}>184,302</div>
+              </div>
+            </div>
+          </div>
 
-        <div className="text-center px-6 mb-8 relative z-10">
-          <h1
-            className="text-5xl md:text-7xl font-bold text-white mb-4 leading-tight"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            Plan your
-            <br />
-            <span style={{ color: '#e94560' }}>perfect trip.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/70 max-w-lg mx-auto">
-            Flights, visa, hotels, weather, and an AI travel concierge — all in one place.
-          </p>
+          <div className="hero-right">
+            <div className="photo hero-photo" data-label="Destination photography" />
+            <div className="hero-stamp">
+              <div className="mono" style={{ fontSize: 9, letterSpacing: '.2em' }}>Boarding · 2026</div>
+              <div className="serif" style={{ fontSize: 28, fontStyle: 'italic' }}>Lisbon</div>
+              <div className="mono mute" style={{ fontSize: 10 }}>38.72°N / 9.13°W</div>
+            </div>
+          </div>
         </div>
 
-        {/* Search card floating over hero */}
-        <div className="w-full max-w-2xl mx-auto px-4 relative z-10">
-          <SearchForm />
+        <div className="hero-marquee mono">
+          Flights · Visa · Hotels · Weather · Activities · Currency · Concierge ·&nbsp;
+          Flights · Visa · Hotels · Weather · Activities · Currency · Concierge
         </div>
       </section>
 
-      {/* Feature strip */}
-      <section className="py-16 px-6" style={{ background: 'var(--surface-2)' }}>
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {FEATURES.map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex flex-col items-center text-center gap-3">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(233, 69, 96, 0.1)' }}
-              >
-                <Icon size={22} strokeWidth={1.5} style={{ color: '#e94560' }} />
-              </div>
-              <div>
-                <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{label}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
-              </div>
+      {/* SEARCH */}
+      <section className="wrap search-section">
+        <div className="search-section-head">
+          <div>
+            <div className="eyebrow">Begin here</div>
+            <h2 className="serif" style={{ fontSize: 44, marginTop: 8 }}>
+              Three questions. One perfect itinerary.
+            </h2>
+          </div>
+          <div className="mono mute" style={{ maxWidth: 260 }}>
+            Your answers encode to a single shareable link — no account, no database.
+          </div>
+        </div>
+        <SearchForm />
+      </section>
+
+      {/* WHAT YOU GET */}
+      <section className="wrap what-section">
+        <div className="what-head">
+          <div className="eyebrow">What arrives</div>
+          <h2 className="serif" style={{ fontSize: 36, marginTop: 6, maxWidth: 560 }}>
+            Seven services, composed on one page.
+          </h2>
+        </div>
+        <div className="what-grid">
+          {WHAT_ITEMS.map(({ n, t, d, Icon }) => (
+            <div className="what-cell" key={n}>
+              <div className="what-num mono">{n}</div>
+              <div className="what-icon"><Icon size={20} strokeWidth={1.5} /></div>
+              <div className="what-title serif">{t}</div>
+              <div className="what-desc mute">{d}</div>
             </div>
           ))}
         </div>
       </section>
-    </>
+
+      {/* DESTINATIONS STRIP */}
+      <section className="dest-strip">
+        <div className="wrap">
+          <div className="dest-head">
+            <div className="eyebrow">In season</div>
+            <div className="mono mute">May · 2026</div>
+          </div>
+          <div className="dest-grid">
+            {DESTINATIONS.map((d) => (
+              <a key={d.city} className="dest-card" href="#search">
+                <div className="photo dest-photo" data-label={d.city} />
+                <div className="dest-meta">
+                  <div className="serif" style={{ fontSize: 22 }}>{d.city}</div>
+                  <div className="mono mute" style={{ fontSize: 11 }}>{d.country} · {d.temp} avg</div>
+                  <div className="serif" style={{ fontSize: 14, color: 'var(--accent)', marginTop: 10 }}>
+                    {d.from} →
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="foot">
+        <div className="wrap foot-inner">
+          <div>
+            <div className="serif" style={{ fontSize: 28, marginBottom: 14 }}>
+              Travel<em style={{ color: 'var(--accent)' }}>AI</em>
+            </div>
+            <div className="mute" style={{ maxWidth: 320, fontSize: 13 }}>
+              An experiment in composing seven travel APIs into a single considered surface.
+              Open source.
+            </div>
+          </div>
+          <div className="foot-cols">
+            <div>
+              <div className="mono mute" style={{ marginBottom: 10 }}>Product</div>
+              <a href="/">Plan a trip</a>
+              <a href="#search">Search</a>
+              <a href="#concierge">Concierge</a>
+            </div>
+            <div>
+              <div className="mono mute" style={{ marginBottom: 10 }}>Built with</div>
+              <a>Next.js 16</a>
+              <a>Tailwind v4</a>
+              <a>Groq · Llama 3.3</a>
+            </div>
+            <div>
+              <div className="mono mute" style={{ marginBottom: 10 }}>Source</div>
+              <a href="https://github.com/maormesika/TravelAi" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+          </div>
+        </div>
+        <div className="wrap foot-bottom mono mute">
+          © 2026 TravelAI · Crafted in transit · v2.5.0
+        </div>
+      </footer>
+    </div>
   )
 }

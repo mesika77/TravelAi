@@ -1,28 +1,44 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { Shield, ExternalLink, RefreshCw } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { VisaResult, VisaType } from '@/lib/types'
 
-const VISA_CONFIG: Record<VisaType, { label: string; color: string; bg: string }> = {
-  visa_free:      { label: 'Visa Free',        color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-  e_visa:         { label: 'eVisa',             color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  visa_on_arrival:{ label: 'Visa on Arrival',   color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  visa_required:  { label: 'Visa Required',     color: '#f59e0b', bg: 'rgba(249,115,22,0.1)' },
-  free_movement:  { label: 'Free Movement',     color: '#14b8a6', bg: 'rgba(20,184,166,0.1)' },
-  unknown:        { label: 'Unknown',           color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
+const VISA_DOT: Record<VisaType, string> = {
+  visa_free:       'var(--go)',
+  free_movement:   'var(--go)',
+  e_visa:          'oklch(62% 0.18 230)',
+  visa_on_arrival: 'var(--caution)',
+  visa_required:   'var(--stop)',
+  unknown:         'var(--ink-4)',
 }
 
-function Skeleton() {
-  return (
-    <div className="card flex flex-col gap-3">
-      <div className="shimmer h-5 w-1/2 rounded" />
-      <div className="shimmer h-10 w-full rounded-full" />
-      <div className="shimmer h-4 w-2/3 rounded" />
-    </div>
-  )
+const VISA_LABEL: Record<VisaType, string> = {
+  visa_free:       'Visa free',
+  free_movement:   'Free movement',
+  e_visa:          'eVisa required',
+  visa_on_arrival: 'Visa on arrival',
+  visa_required:   'Visa required',
+  unknown:         'Check requirements',
+}
+
+const FLAG: Record<string, string> = {
+  US: '🇺🇸', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺', DE: '🇩🇪', FR: '🇫🇷',
+  IT: '🇮🇹', ES: '🇪🇸', NL: '🇳🇱', JP: '🇯🇵', IL: '🇮🇱', SG: '🇸🇬',
+  BR: '🇧🇷', MX: '🇲🇽', KR: '🇰🇷', IN: '🇮🇳', ZA: '🇿🇦', NZ: '🇳🇿',
+  SE: '🇸🇪', NO: '🇳🇴', CH: '🇨🇭', AT: '🇦🇹', BE: '🇧🇪', PL: '🇵🇱',
+  PT: '🇵🇹', GR: '🇬🇷', TR: '🇹🇷', AE: '🇦🇪', TH: '🇹🇭', CN: '🇨🇳',
+}
+
+const COUNTRY_NAME: Record<string, string> = {
+  US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+  DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain', NL: 'Netherlands',
+  JP: 'Japan', IL: 'Israel', SG: 'Singapore', BR: 'Brazil', MX: 'Mexico',
+  KR: 'South Korea', IN: 'India', ZA: 'South Africa', NZ: 'New Zealand',
+  SE: 'Sweden', NO: 'Norway', CH: 'Switzerland', AT: 'Austria', BE: 'Belgium',
+  PL: 'Poland', PT: 'Portugal', GR: 'Greece', TR: 'Turkey', AE: 'UAE',
+  TH: 'Thailand', CN: 'China',
 }
 
 export default function VisaBadge() {
@@ -32,76 +48,83 @@ export default function VisaBadge() {
   const [error, setError] = useState<string | null>(null)
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
-      const res = await fetch(
-        `/api/visa?passport=${params.passport}&destination=${encodeURIComponent(params.destination)}`
-      )
+      const res = await fetch(`/api/visa?passport=${params.passport}&destination=${encodeURIComponent(params.destination)}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to check visa')
       setVisa(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to check visa')
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed') }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cfg = visa ? VISA_CONFIG[visa.type] : null
+  const passportFlag = FLAG[params.passport] ?? '🌐'
+  const passportName = COUNTRY_NAME[params.passport] ?? params.passport
 
   return (
-    <section>
-      <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        🛂 Visa Requirements
-      </h2>
-      {loading && <Skeleton />}
+    <section className="sec-sm">
+      <div className="sec-sm-head">
+        <div className="kicker">Visa</div>
+        <Shield size={14} style={{ color: 'var(--ink-4)' }} />
+      </div>
+
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+          <div className="shimmer" style={{ height: 32, borderRadius: 999 }} />
+          <div className="shimmer" style={{ height: 16, width: '70%', borderRadius: 4 }} />
+        </div>
+      )}
+
       {error && !loading && (
-        <div className="card flex flex-col gap-3">
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error}</p>
-          <button onClick={load} className="btn-secondary flex items-center gap-2 w-fit">
-            <RefreshCw size={14} /> Retry
+        <div style={{ marginTop: 10 }}>
+          <p className="mute" style={{ fontSize: 13 }}>{error}</p>
+          <button onClick={load} className="btn-link" style={{ marginTop: 10 }}>
+            <RefreshCw size={11} /> Retry
           </button>
         </div>
       )}
-      {visa && !loading && cfg && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card flex flex-col gap-4"
-        >
-          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-            <Shield size={16} strokeWidth={1.5} />
-            <span>{params.passport} passport → {params.destination}</span>
+
+      {visa && !loading && (
+        <div className="visa-body" style={{ marginTop: 10 }}>
+          <div className="visa-badge">
+            <div className="visa-dot" style={{ background: VISA_DOT[visa.type] }} />
+            <span className="mono">{VISA_LABEL[visa.type]}</span>
           </div>
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="flex items-center justify-center gap-3 py-3 px-6 rounded-full font-bold text-lg"
-            style={{ background: cfg.bg, color: cfg.color }}
-          >
-            {cfg.label}
-          </motion.div>
+
           {visa.maxStay && (
-            <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>
-              Max stay: <strong style={{ color: 'var(--text)' }}>{visa.maxStay}</strong>
-            </p>
+            <div className="serif" style={{ fontSize: 20, marginTop: 14, lineHeight: 1.3 }}>
+              {passportFlag} passport holders enter visa-free for up to{' '}
+              <span className="tabular">{visa.maxStay}</span>.
+            </div>
           )}
+
+          <div className="hr" />
+
+          <div className="visa-meta">
+            <div>
+              <div className="mono mute">Passport</div>
+              <div style={{ marginTop: 4 }}>{passportFlag} {passportName}</div>
+            </div>
+            <div>
+              <div className="mono mute">Destination</div>
+              <div style={{ marginTop: 4 }}>{params.destination}</div>
+            </div>
+          </div>
+
           {visa.sourceUrl && (
             <a
               href={visa.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm justify-center"
-              style={{ color: 'var(--info)' }}
+              className="btn-link"
+              style={{ marginTop: 14, display: 'inline-flex' }}
             >
-              Official source <ExternalLink size={13} strokeWidth={1.5} />
+              Embassy source <ExternalLink size={10} />
             </a>
           )}
-        </motion.div>
+        </div>
       )}
     </section>
   )

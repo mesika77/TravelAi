@@ -65,12 +65,8 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
   }
 
   return (
-    <div ref={ref} className="relative">
-      {label && (
-        <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>
-          {label}
-        </label>
-      )}
+    <div ref={ref} className="field" style={{ position: 'relative' }}>
+      {label && <div className="field-label">{label}</div>}
       <input
         type="text"
         placeholder={placeholder}
@@ -79,30 +75,38 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
         onChange={(e) => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); setActiveIndex(-1) }}
         onFocus={() => { if (query.length >= 1) setOpen(true) }}
         onKeyDown={handleKeyDown}
-        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
-        className="rounded-xl border p-3 w-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+        className="input"
       />
       {open && filtered.length > 0 && (
         <div
-          className="absolute z-50 w-full mt-1 rounded-xl overflow-hidden shadow-xl"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+          style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+            background: 'var(--paper)', border: '1px solid var(--line)',
+            borderRadius: 'var(--r)', marginTop: 4,
+            boxShadow: '0 20px 40px rgba(0,0,0,.1)', overflow: 'hidden',
+          }}
         >
           {filtered.map((s, i) => (
             <button
               key={`${s.city}-${i}`}
               type="button"
               onMouseDown={() => select(s)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors duration-100"
-              style={{ background: i === activeIndex ? 'var(--surface-2)' : 'transparent', color: 'var(--text)' }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', padding: '10px 16px',
+                textAlign: 'left', background: i === activeIndex ? 'var(--paper-2)' : 'transparent',
+                borderBottom: '1px solid var(--line-soft)',
+              }}
             >
-              <span className="font-medium text-sm">{s.city}</span>
-              <span className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>{s.city}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-4)', fontSize: 11 }}>
                 {s.country}
                 {s.iata && (
-                  <span
-                    className="font-mono font-bold px-1.5 py-0.5 rounded"
-                    style={{ background: 'var(--surface-2)', color: 'var(--accent)', fontSize: '0.65rem' }}
-                  >
+                  <span style={{
+                    fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700,
+                    padding: '2px 6px', borderRadius: 4,
+                    background: 'var(--accent-soft)', color: 'var(--accent)',
+                  }}>
                     {s.iata}
                   </span>
                 )}

@@ -1,29 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Plane, Clock, Leaf, ExternalLink, RefreshCw } from 'lucide-react'
+import { Plane, Leaf, ExternalLink, RefreshCw } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { FlightOffer } from '@/lib/types'
 
-function Skeleton() {
+function SkeletonRow() {
   return (
-    <div className="flex flex-col gap-3">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="card flex flex-col gap-3">
-          <div className="shimmer h-5 w-1/3 rounded" />
-          <div className="shimmer h-4 w-2/3 rounded" />
-          <div className="shimmer h-4 w-1/2 rounded" />
-        </div>
+    <div className="flight-row" style={{ opacity: 0.5 }}>
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="shimmer" style={{ height: 20, borderRadius: 4 }} />
       ))}
     </div>
   )
 }
 
 function formatDuration(mins: number) {
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return `${h}h ${m}m`
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
 }
 
 export default function FlightCard() {
@@ -34,133 +27,147 @@ export default function FlightCard() {
   const [missingKey, setMissingKey] = useState(false)
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const res = await fetch(
         `/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}&oneWay=${params.oneWay ?? false}`
       )
       const data = await res.json()
-      if (!res.ok) {
-        if (data.key) setMissingKey(true)
-        throw new Error(data.error ?? 'Failed to load flights')
-      }
+      if (!res.ok) { if (data.key) setMissingKey(true); throw new Error(data.error ?? 'Failed') }
       setFlights(data.flights)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load flights')
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed to load flights') }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const dep = new Date(params.departureDate)
+  const ret = params.oneWay ? null : new Date(params.returnDate)
+  const fmtDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
   return (
-    <section>
-      <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        ✈️ Flights {params.oneWay && <span className="text-sm font-normal ml-1" style={{ color: 'var(--text-muted)' }}>· One Way</span>}
-      </h2>
-      {loading && <Skeleton />}
+    <section className="sec">
+      <div className="section-head">
+        <div>
+          <div className="kicker">01 · {params.oneWay ? 'One Way' : 'Outbound'}</div>
+          <h2 className="section-title serif">Flights</h2>
+        </div>
+        <div className="mono mute">{loading ? 'Loading…' : error ? '' : `${flights.length} results · sorted by price`}</div>
+      </div>
+
+      {/* Route summary */}
+      <div className="flight-route">
+        <div className="route-point">
+          <div className="serif tabular" style={{ fontSize: 28 }}>{params.origin.slice(0, 3).toUpperCase()}</div>
+          <div className="mono mute">{params.origin}</div>
+        </div>
+        <div className="route-line">
+          <div className="route-dash" />
+          <Plane size={15} style={{ color: 'var(--accent)' }} />
+          <div className="route-dash" />
+        </div>
+        <div className="route-point">
+          <div className="serif tabular" style={{ fontSize: 28 }}>{params.destination.slice(0, 3).toUpperCase()}</div>
+          <div className="mono mute">{params.destination}</div>
+        </div>
+        <div className="route-dates">
+          <div className="mono mute">Out</div>
+          <div className="serif tabular">{fmtDate(dep)}</div>
+        </div>
+        {ret && (
+          <div className="route-dates">
+            <div className="mono mute">Back</div>
+            <div className="serif tabular">{fmtDate(ret)}</div>
+          </div>
+        )}
+      </div>
+
+      {/* States */}
+      {loading && (
+        <div className="flight-list">
+          <SkeletonRow /><SkeletonRow /><SkeletonRow />
+        </div>
+      )}
+
       {error && !loading && (
-        <div className="card flex flex-col gap-3">
+        <div className="sec-sm" style={{ textAlign: 'center', padding: '32px 22px' }}>
           {missingKey ? (
             <>
-              <p className="font-semibold" style={{ color: 'var(--text)' }}>SerpApi key not configured</p>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Add <code className="px-1 rounded text-xs" style={{ background: 'var(--surface-2)' }}>SERPAPI_KEY</code> to your{' '}
-                <code>.env.local</code> file. Get a key at{' '}
-                <a href="https://serpapi.com" target="_blank" rel="noopener noreferrer" className="underline">serpapi.com</a>.
-              </p>
+              <p style={{ fontWeight: 500 }}>SerpAPI key not configured</p>
+              <p className="mono mute" style={{ marginTop: 8 }}>Add SERPAPI_KEY to .env.local</p>
             </>
           ) : (
             <>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error}</p>
-              <button onClick={load} className="btn-secondary flex items-center gap-2 w-fit">
-                <RefreshCw size={14} /> Retry
+              <p className="mute" style={{ fontSize: 14 }}>{error}</p>
+              <button onClick={load} className="btn-link" style={{ marginTop: 12 }}>
+                <RefreshCw size={12} /> Retry
               </button>
             </>
           )}
         </div>
       )}
+
       {!loading && !error && flights.length === 0 && (
-        <div className="card text-center py-8">
-          <p style={{ color: 'var(--text-muted)' }}>No flights found for this route.</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Try adjusting your dates or cities.</p>
+        <div className="sec-sm" style={{ textAlign: 'center', padding: '40px 22px' }}>
+          <p className="mute">No flights found for this route.</p>
+          <p className="mono mute" style={{ marginTop: 6 }}>Try adjusting dates or cities.</p>
         </div>
       )}
+
       {!loading && flights.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {flights.map((f, i) => (
-            <motion.div
-              key={f.id}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ scale: 1.02, boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }}
-              className="card cursor-default"
-              style={{ transition: 'box-shadow 0.2s' }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Plane size={16} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-                    <span className="font-semibold" style={{ color: 'var(--text)' }}>{f.airline}</span>
-                    {f.stops === 0 && (
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>
-                        Nonstop
-                      </span>
-                    )}
-                    {f.stops > 0 && (
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
-                        {f.stops} stop{f.stops > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                    <span className="flex items-center gap-1">
-                      <Clock size={13} strokeWidth={1.5} />
-                      {formatDuration(f.totalDuration)}
-                    </span>
-                    {f.legs[0] && (
-                      <span>
-                        {f.legs[0].departureTime?.slice(11, 16) || '--'} → {f.legs[f.legs.length - 1]?.arrivalTime?.slice(11, 16) || '--'}
-                      </span>
-                    )}
-                    {f.carbonEmissions && (
-                      <span className="flex items-center gap-1" style={{ color: 'var(--success)' }}>
-                        <Leaf size={13} strokeWidth={1.5} />
-                        {Math.round(f.carbonEmissions / 1000)}kg CO₂
-                      </span>
-                    )}
+        <div className="flight-list">
+          {flights.map((f, i) => {
+            const dep = f.legs[0]?.departureTime?.slice(11, 16) ?? '--'
+            const arr = f.legs[f.legs.length - 1]?.arrivalTime?.slice(11, 16) ?? '--'
+            const stopLabel = f.stops === 0 ? 'Nonstop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`
+            const bookUrl = f.bookingToken
+              ? `https://www.google.com/travel/flights?tfs=${f.bookingToken}`
+              : 'https://www.google.com/travel/flights'
+
+            return (
+              <div key={f.id} className={'flight-row' + (i === 0 ? ' flight-row-best' : '')}>
+                {i === 0 && <div className="best-ribbon">Best value</div>}
+
+                <div className="flight-airline">
+                  <div className="airline-mark">{f.airline.slice(0, 2)}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{f.airline}</div>
+                    <div className="mono mute">{f.legs[0]?.flightNumber ?? ''}</div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className="text-2xl font-bold" style={{ color: 'var(--text)' }}>
-                    ${f.price.toLocaleString()}
-                  </span>
-                  {f.bookingToken ? (
-                    <a
-                      href={`https://www.google.com/travel/flights?tfs=${f.bookingToken}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary text-sm px-4 py-2 flex items-center gap-1"
-                    >
-                      Book <ExternalLink size={13} strokeWidth={1.5} />
-                    </a>
-                  ) : (
-                    <a
-                      href={`https://www.google.com/travel/flights`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary text-sm px-4 py-2 flex items-center gap-1"
-                    >
-                      Search <ExternalLink size={13} strokeWidth={1.5} />
-                    </a>
-                  )}
+
+                <div className="flight-times">
+                  <div className="serif tabular" style={{ fontSize: 20 }}>{dep}</div>
+                  <div className="mono mute">{params.origin.slice(0, 3).toUpperCase()}</div>
+                </div>
+
+                <div className="flight-dur">
+                  <div className="mono mute" style={{ fontSize: 10 }}>{formatDuration(f.totalDuration)}</div>
+                  <div className="dur-line" />
+                  <div className="mono mute" style={{ fontSize: 10 }}>{stopLabel}</div>
+                </div>
+
+                <div className="flight-times">
+                  <div className="serif tabular" style={{ fontSize: 20 }}>{arr}</div>
+                  <div className="mono mute">{params.destination.slice(0, 3).toUpperCase()}</div>
+                </div>
+
+                {f.carbonEmissions ? (
+                  <div className="flight-co2">
+                    <Leaf size={12} />
+                    <span className="mono tabular">{Math.round(f.carbonEmissions / 1000)}kg</span>
+                  </div>
+                ) : <div />}
+
+                <div className="flight-price">
+                  <div className="serif tabular" style={{ fontSize: 24 }}>${f.price.toLocaleString()}</div>
+                  <a href={bookUrl} target="_blank" rel="noopener noreferrer" className="btn-link">
+                    Book <ExternalLink size={10} />
+                  </a>
                 </div>
               </div>
-            </motion.div>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>

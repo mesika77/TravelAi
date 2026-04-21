@@ -1,26 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { Sparkles, X, Send } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { ChatMessage } from '@/lib/types'
-
-function TypingIndicator() {
-  return (
-    <div className="flex gap-1 px-4 py-3 rounded-2xl w-fit" style={{ background: 'var(--surface-2)' }}>
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          className="w-2 h-2 rounded-full"
-          style={{ background: 'var(--text-muted)' }}
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
-        />
-      ))}
-    </div>
-  )
-}
 
 export default function ChatBot() {
   const { params, nights } = useTripContext()
@@ -50,22 +33,16 @@ export default function ChatBot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: allMessages, tripParams: params, nights }),
       })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error ?? 'Chat error')
-      }
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error ?? 'Chat error') }
 
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
-
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
       while (reader) {
         const { done, value } = await reader.read()
         if (done) break
-        const chunk = decoder.decode(value)
-        assistantText += chunk
+        assistantText += decoder.decode(value)
         setMessages((prev) => {
           const updated = [...prev]
           updated[updated.length - 1] = { role: 'assistant', content: assistantText }
@@ -73,8 +50,8 @@ export default function ChatBot() {
         })
       }
     } catch (e) {
-      const errMsg = e instanceof Error ? e.message : 'Something went wrong'
-      setMessages((prev) => [...prev, { role: 'assistant', content: `Sorry, I ran into an error: ${errMsg}` }])
+      const msg = e instanceof Error ? e.message : 'Something went wrong'
+      setMessages((prev) => [...prev, { role: 'assistant', content: `Sorry — ${msg}` }])
     } finally {
       setStreaming(false)
     }
@@ -82,116 +59,107 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Floating button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      {/* FAB */}
+      <button
+        className="chat-fab"
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
-        style={{ background: 'var(--accent)', color: 'white' }}
-        aria-label="Open travel concierge chat"
+        aria-label="Open concierge"
       >
-        <AnimatePresence mode="wait">
-          {open ? (
-            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <X size={22} strokeWidth={2} />
-            </motion.div>
-          ) : (
-            <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <MessageCircle size={22} strokeWidth={2} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+        {open ? <X size={20} strokeWidth={2} /> : <Sparkles size={20} strokeWidth={1.5} />}
+      </button>
 
-      {/* Chat panel */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-24 right-6 z-50 w-80 md:w-96 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-            style={{
-              height: '400px',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            {/* Header */}
-            <div className="px-4 py-3 border-b flex-shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
-              <p className="font-semibold text-sm" style={{ color: 'var(--text)', fontFamily: 'var(--font-playfair)' }}>
-                AI Travel Concierge
-              </p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {params.origin} → {params.destination} · {nights} nights
-              </p>
+      {/* Panel */}
+      {open && (
+        <div className="chat-panel">
+          <div className="chat-header">
+            <div className="chat-header-mark">
+              <Sparkles size={14} strokeWidth={1.5} />
             </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-              {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <p className="text-2xl mb-2">✈️</p>
-                  <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
-                    Ask me anything about your trip!
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    Best restaurants, things to do, neighborhoods, tips...
-                  </p>
-                </div>
-              )}
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    className="max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed"
-                    style={{
-                      background: m.role === 'user' ? 'var(--accent)' : 'var(--surface-2)',
-                      color: m.role === 'user' ? 'white' : 'var(--text)',
-                      borderBottomRightRadius: m.role === 'user' ? '4px' : undefined,
-                      borderBottomLeftRadius: m.role === 'assistant' ? '4px' : undefined,
-                    }}
-                  >
-                    {m.content || (streaming && i === messages.length - 1 ? '...' : '')}
-                  </div>
-                </div>
-              ))}
-              {streaming && messages[messages.length - 1]?.content === '' && <TypingIndicator />}
-              {streaming && messages.length === 0 && <TypingIndicator />}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="p-3 border-t flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder="Ask about restaurants, tips..."
-                  disabled={streaming}
-                  className="flex-1 text-sm rounded-xl px-3 py-2 transition-all duration-200 focus:outline-none"
-                  style={{
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                  }}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || streaming}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-40"
-                  style={{ background: 'var(--accent)', color: 'white' }}
-                >
-                  <Send size={16} strokeWidth={1.5} />
-                </button>
+            <div>
+              <div className="serif" style={{ fontSize: 16 }}>Concierge</div>
+              <div className="mono mute" style={{ marginTop: 2 }}>
+                {params.origin} → {params.destination}
+                {nights > 0 ? ` · ${nights} nights` : ' · One way'}
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+
+          <div className="chat-body">
+            {messages.length === 0 && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 8, marginTop: 40 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-soft)', display: 'grid', placeItems: 'center' }}>
+                  <Sparkles size={18} style={{ color: 'var(--accent)' }} strokeWidth={1.5} />
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 500 }}>Ask me anything</p>
+                <p className="mute" style={{ fontSize: 12, maxWidth: 220 }}>
+                  Best restaurants, neighborhoods, tips, hidden gems…
+                </p>
+              </div>
+            )}
+
+            {messages.map((m, i) => (
+              <div key={i} className={'chat-msg' + (m.role === 'user' ? ' chat-user' : '')}>
+                {m.role === 'assistant' && (
+                  <div className="chat-avatar">
+                    <Sparkles size={10} strokeWidth={1.5} />
+                  </div>
+                )}
+                <div className="chat-bubble">
+                  {m.content || (streaming && i === messages.length - 1 ? '…' : '')}
+                </div>
+              </div>
+            ))}
+
+            {streaming && messages[messages.length - 1]?.content === '' && (
+              <div className="chat-msg">
+                <div className="chat-avatar"><Sparkles size={10} strokeWidth={1.5} /></div>
+                <div className="chat-bubble" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {[0, 1, 2].map((j) => (
+                    <span
+                      key={j}
+                      style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: 'var(--ink-4)',
+                        display: 'inline-block',
+                        animation: `bounce 0.9s ease ${j * 0.15}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="chat-input-row">
+            <input
+              type="text"
+              className="chat-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              placeholder="Ask about restaurants, tips…"
+              disabled={streaming}
+            />
+            <button
+              className="chat-send"
+              onClick={sendMessage}
+              disabled={!input.trim() || streaming}
+              style={{ opacity: !input.trim() || streaming ? 0.3 : 1 }}
+            >
+              <Send size={14} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-5px); }
+        }
+      `}</style>
     </>
   )
 }

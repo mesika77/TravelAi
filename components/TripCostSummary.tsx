@@ -1,26 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { DollarSign, RefreshCw, AlertTriangle } from 'lucide-react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { HotelsResult, FlightOffer } from '@/lib/types'
 import dailyCostsData from '@/public/data/daily-costs.json'
-
-function Skeleton() {
-  return (
-    <div className="card flex flex-col gap-3">
-      <div className="shimmer h-5 w-1/2 rounded" />
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="flex justify-between">
-          <div className="shimmer h-4 w-1/3 rounded" />
-          <div className="shimmer h-4 w-1/4 rounded" />
-        </div>
-      ))}
-      <div className="shimmer h-8 w-full rounded" />
-    </div>
-  )
-}
 
 const dailyCosts = dailyCostsData as Record<string, { food: number; transport: number; activities: number; total: number }>
 
@@ -32,8 +16,7 @@ export default function TripCostSummary() {
   const [error, setError] = useState<string | null>(null)
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const fetches: Promise<Response>[] = [
         fetch(`/api/flights?origin=${encodeURIComponent(params.origin)}&destination=${encodeURIComponent(params.destination)}&departureDate=${params.departureDate}&returnDate=${params.returnDate}&oneWay=${params.oneWay ?? false}`),
@@ -49,16 +32,12 @@ export default function TripCostSummary() {
         const cheapest = (fd.flights as FlightOffer[])?.sort((a, b) => a.price - b.price)[0]
         if (cheapest) setFlightPrice(cheapest.price)
       }
-
       if (hotelRes && hotelRes.status === 'fulfilled' && hotelRes.value.ok) {
         const hd = await hotelRes.value.json() as HotelsResult
         if (hd.avgNightly) setAvgNightly(hd.avgNightly)
       }
-    } catch {
-      setError('Failed to load cost estimate.')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('Failed to load cost estimate.') }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -78,108 +57,103 @@ export default function TripCostSummary() {
   const overBudgetPct = totalBudget > 0 ? Math.round(((grandTotal - totalBudget) / totalBudget) * 100) : 0
   const isOverBudget = !params.oneWay && overBudgetPct > 20
 
-  return (
-    <section>
-      <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        💰 Cost Estimate
-      </h2>
-      {loading && <Skeleton />}
-      {error && !loading && (
-        <div className="card flex flex-col gap-3">
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error}</p>
-          <button onClick={load} className="btn-secondary flex items-center gap-2 w-fit">
-            <RefreshCw size={14} /> Retry
-          </button>
+  if (loading) {
+    return (
+      <section className="sec-sm">
+        <div className="sec-sm-head">
+          <div className="kicker">Estimate</div>
         </div>
-      )}
-      {!loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card flex flex-col gap-3"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={18} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-            <span className="font-semibold" style={{ color: 'var(--text)' }}>
-              {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}{!params.oneWay && ` · ${nights} night${nights > 1 ? 's' : ''}`}
-            </span>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+          <div className="shimmer" style={{ height: 56, width: '60%', borderRadius: 4 }} />
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div className="shimmer" style={{ height: 14, width: '45%', borderRadius: 4 }} />
+              <div className="shimmer" style={{ height: 14, width: '25%', borderRadius: 4 }} />
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
-          {params.oneWay ? (
-            <>
-              <div className="flex flex-col gap-2 text-sm">
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>✈️ One-way flight</span>
-                  <span style={{ color: 'var(--text)' }}>
-                    {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
-                  </span>
-                </div>
-              </div>
-              <div
-                className="flex justify-between font-bold text-base mt-1 pt-3"
-                style={{ borderTop: '1px solid var(--border)', color: 'var(--text)' }}
-              >
-                <span>Flight Total</span>
-                <span style={{ color: 'var(--accent)' }}>
-                  {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
-                </span>
-              </div>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Return date unknown — only flight cost shown.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="flex flex-col gap-2 text-sm">
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>✈️ Flights</span>
-                  <span style={{ color: 'var(--text)' }}>
-                    {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>🏨 Hotels (cheapest · {nights} nights)</span>
-                  <span style={{ color: 'var(--text)' }}>
-                    {hotelTotal !== null ? `$${hotelTotal.toLocaleString()}` : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>🍽 Food (~${daily.food}/day)</span>
-                  <span style={{ color: 'var(--text)' }}>${(daily.food * nights * totalTravelers).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>🚌 Transport (~${daily.transport}/day)</span>
-                  <span style={{ color: 'var(--text)' }}>${(daily.transport * nights * totalTravelers).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-muted)' }}>🎭 Activities (~${daily.activities}/day)</span>
-                  <span style={{ color: 'var(--text)' }}>${(daily.activities * nights * totalTravelers).toLocaleString()}</span>
-                </div>
-              </div>
-              <div
-                className="flex justify-between font-bold text-base mt-1 pt-3"
-                style={{ borderTop: '1px solid var(--border)', color: 'var(--text)' }}
-              >
-                <span>Estimated Total</span>
-                <span style={{ color: 'var(--accent)' }}>${grandTotal.toLocaleString()}</span>
-              </div>
-              {isOverBudget && (
-                <div
-                  className="flex items-start gap-2 rounded-xl p-3 text-xs"
-                  style={{ background: 'rgba(245,158,11,0.1)', color: '#b45309' }}
-                >
-                  <AlertTriangle size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
-                  <span>
-                    This trip is <strong>{overBudgetPct}% over your ${params.budget.toLocaleString()} budget</strong> per person. Consider fewer nights, cheaper hotels, or a different destination.
-                  </span>
-                </div>
-              )}
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Budget per person: ${params.budget.toLocaleString()} · Estimate for planning purposes only.
-              </p>
-            </>
-          )}
-        </motion.div>
+  if (error) {
+    return (
+      <section className="sec-sm">
+        <div className="sec-sm-head"><div className="kicker">Estimate</div></div>
+        <p className="mute" style={{ fontSize: 13, marginTop: 10 }}>{error}</p>
+        <button onClick={load} className="btn-link" style={{ marginTop: 10 }}>
+          <RefreshCw size={11} /> Retry
+        </button>
+      </section>
+    )
+  }
+
+  if (params.oneWay) {
+    return (
+      <section className="sec-sm">
+        <div className="sec-sm-head">
+          <div className="kicker">Estimate</div>
+        </div>
+        <div className="serif tabular" style={{ fontSize: 44, lineHeight: 1, marginTop: 14 }}>
+          {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : '—'}
+        </div>
+        <div className="mono mute" style={{ marginTop: 6 }}>One-way flight · {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}</div>
+        <div className="hr" />
+        <div className="cost-row">
+          <div>
+            <div style={{ fontSize: 14 }}>Flights</div>
+            <div className="mono mute">${flightPrice ?? '—'} × {totalTravelers}</div>
+          </div>
+          <div className="serif tabular" style={{ fontSize: 18 }}>
+            {flightTotal !== null ? `$${flightTotal.toLocaleString()}` : '—'}
+          </div>
+        </div>
+        <p className="mono mute" style={{ marginTop: 10, fontStyle: 'italic' }}>Return date unknown — only flight shown.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="sec-sm card-ink">
+      <div className="sec-sm-head">
+        <div className="kicker" style={{ color: 'color-mix(in oklch, var(--paper) 55%, transparent)' }}>Estimate</div>
+      </div>
+      <div className="serif tabular" style={{ fontSize: 52, lineHeight: 1, marginTop: 16 }}>
+        ${grandTotal.toLocaleString()}
+      </div>
+      <div className="mono" style={{ color: 'color-mix(in oklch, var(--paper) 60%, transparent)', marginTop: 6 }}>
+        Total · {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''} · {nights} nights
+      </div>
+
+      <div className="hr hr-ink" style={{ marginTop: 22 }} />
+
+      {[
+        ['Flights', flightTotal !== null ? `$${flightPrice} × ${totalTravelers}` : '—', flightTotal],
+        ['Hotels', avgNightly !== null ? `$${avgNightly} × ${nights} × ${totalTravelers}` : '—', hotelTotal],
+        ['Daily · food, transit, play', `$${daily.total} × ${nights} × ${totalTravelers}`, dailyTotal],
+      ].map(([label, sub, val]) => (
+        <div key={String(label)} className="cost-row">
+          <div>
+            <div style={{ fontSize: 14 }}>{label}</div>
+            <div className="mono" style={{ color: 'color-mix(in oklch, var(--paper) 50%, transparent)', fontSize: 11 }}>{sub}</div>
+          </div>
+          <div className="serif tabular" style={{ fontSize: 18 }}>
+            {val !== null ? `$${Number(val).toLocaleString()}` : '—'}
+          </div>
+        </div>
+      ))}
+
+      {isOverBudget && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 14,
+          padding: '10px 12px', borderRadius: 'var(--r-sm)',
+          background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+        }}>
+          <AlertTriangle size={14} style={{ marginTop: 1, flexShrink: 0 }} />
+          <span style={{ fontSize: 12, lineHeight: 1.5 }}>
+            {overBudgetPct}% over your ${params.budget.toLocaleString()} budget per person. Consider fewer nights or cheaper hotels.
+          </span>
+        </div>
       )}
     </section>
   )

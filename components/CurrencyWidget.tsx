@@ -1,22 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { RefreshCw, DollarSign } from 'lucide-react'
+import { Coins, RefreshCw } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { CurrencyResult } from '@/lib/types'
-
-function Skeleton() {
-  return (
-    <div className="card flex flex-col gap-3">
-      <div className="shimmer h-5 w-1/2 rounded" />
-      <div className="shimmer h-10 w-2/3 rounded" />
-      <div className="grid grid-cols-2 gap-2">
-        {[0, 1, 2, 3].map((i) => <div key={i} className="shimmer h-8 rounded" />)}
-      </div>
-    </div>
-  )
-}
 
 const QUICK_AMOUNTS = [50, 100, 200, 500]
 
@@ -28,98 +15,84 @@ export default function CurrencyWidget() {
   const [missingKey, setMissingKey] = useState(false)
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
-    setMissingKey(false)
+    setLoading(true); setError(null); setMissingKey(false)
     try {
-      const res = await fetch(
-        `/api/currency?city=${encodeURIComponent(params.destination)}&budget=${params.budget}`
-      )
+      const res = await fetch(`/api/currency?city=${encodeURIComponent(params.destination)}&budget=${params.budget}`)
       const data = await res.json()
-      if (!res.ok) {
-        if (data.key) setMissingKey(true)
-        throw new Error(data.error ?? 'Failed to load currency')
-      }
+      if (!res.ok) { if (data.key) setMissingKey(true); throw new Error(data.error ?? 'Failed') }
       setResult(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load currency')
-    } finally {
-      setLoading(false)
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed') }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <section>
-      <h2 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-playfair)', color: 'var(--text)' }}>
-        💱 Currency
-      </h2>
-      {loading && <Skeleton />}
+    <section className="sec-sm">
+      <div className="sec-sm-head">
+        <div className="kicker">Currency</div>
+        <Coins size={14} style={{ color: 'var(--ink-4)' }} />
+      </div>
+
+      {loading && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="shimmer" style={{ height: 36, width: '55%', borderRadius: 4 }} />
+          <div className="shimmer" style={{ height: 14, width: '40%', borderRadius: 4 }} />
+          <div className="hr" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {[0, 1, 2, 3].map((i) => <div key={i} className="shimmer" style={{ height: 28, borderRadius: 4 }} />)}
+          </div>
+        </div>
+      )}
+
       {error && !loading && (
-        <div className="card flex flex-col gap-3">
+        <div style={{ marginTop: 10 }}>
           {missingKey ? (
             <>
-              <p className="font-semibold" style={{ color: 'var(--text)' }}>ExchangeRate API key not configured</p>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Add <code className="px-1 rounded text-xs" style={{ background: 'var(--surface-2)' }}>EXCHANGE_RATE_API_KEY</code> to{' '}
-                <code>.env.local</code>. Get a free key at{' '}
-                <a href="https://exchangerate-api.com" target="_blank" rel="noopener noreferrer" className="underline">
-                  exchangerate-api.com
-                </a>.
-              </p>
+              <p style={{ fontWeight: 500, fontSize: 14 }}>ExchangeRate API key missing</p>
+              <p className="mono mute" style={{ marginTop: 6 }}>Add EXCHANGE_RATE_API_KEY to .env.local</p>
             </>
           ) : (
             <>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error}</p>
-              <button onClick={load} className="btn-secondary flex items-center gap-2 w-fit">
-                <RefreshCw size={14} /> Retry
+              <p className="mute" style={{ fontSize: 13 }}>{error}</p>
+              <button onClick={load} className="btn-link" style={{ marginTop: 10 }}>
+                <RefreshCw size={11} /> Retry
               </button>
             </>
           )}
         </div>
       )}
+
       {result && !loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card flex flex-col gap-4"
-        >
-          <div className="flex items-center gap-2">
-            <DollarSign size={18} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-            <span className="font-semibold" style={{ color: 'var(--text)' }}>
-              1 USD = {result.rate.toFixed(2)} {result.targetCurrency}
-            </span>
-          </div>
-
-          <div>
-            <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Your budget per person</p>
-            <p className="text-3xl font-bold" style={{ color: 'var(--text)' }}>
-              {result.targetSymbol}{result.budgetInLocal.toLocaleString()}
-              <span className="text-base font-normal ml-2" style={{ color: 'var(--text-muted)' }}>
-                {result.targetCurrency}
-              </span>
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Quick reference</p>
-            <div className="grid grid-cols-2 gap-2">
-              {QUICK_AMOUNTS.map((amount) => (
-                <div
-                  key={amount}
-                  className="flex justify-between items-center p-2 rounded-lg text-sm"
-                  style={{ background: 'var(--surface-2)', color: 'var(--text)' }}
-                >
-                  <span style={{ color: 'var(--text-muted)' }}>${amount}</span>
-                  <span className="font-medium">
-                    {result.targetSymbol}{Math.round(amount * result.rate).toLocaleString()}
-                  </span>
-                </div>
-              ))}
+        <>
+          <div className="curr-main">
+            <div>
+              <div className="mono mute">1 USD</div>
+              <div className="serif tabular" style={{ fontSize: 34 }}>
+                {result.targetSymbol}{result.rate.toFixed(2)}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="mono mute">Your budget</div>
+              <div className="serif tabular" style={{ fontSize: 22 }}>
+                {result.targetSymbol}{result.budgetInLocal.toLocaleString()}
+              </div>
             </div>
           </div>
-        </motion.div>
+
+          <div className="hr" />
+
+          <div className="curr-ref">
+            {QUICK_AMOUNTS.map((amount) => (
+              <div key={amount} className="curr-ref-row">
+                <span className="mono tabular">${amount}</span>
+                <span className="serif tabular">
+                  {result.targetSymbol}{Math.round(amount * result.rate).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </section>
   )
