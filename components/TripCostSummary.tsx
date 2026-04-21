@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { DollarSign, RefreshCw } from 'lucide-react'
+import { DollarSign, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { HotelsResult, FlightOffer } from '@/lib/types'
 import dailyCostsData from '@/public/data/daily-costs.json'
@@ -73,6 +73,10 @@ export default function TripCostSummary() {
   const dailyTotal = daily.total * nights * totalTravelers
   const flightTotal = flightPrice !== null ? flightPrice * totalTravelers : null
   const grandTotal = (flightTotal ?? 0) + (hotelTotal ?? 0) + dailyTotal
+
+  const totalBudget = params.budget * totalTravelers
+  const overBudgetPct = totalBudget > 0 ? Math.round(((grandTotal - totalBudget) / totalBudget) * 100) : 0
+  const isOverBudget = !params.oneWay && overBudgetPct > 20
 
   return (
     <section>
@@ -159,6 +163,17 @@ export default function TripCostSummary() {
                 <span>Estimated Total</span>
                 <span style={{ color: 'var(--accent)' }}>${grandTotal.toLocaleString()}</span>
               </div>
+              {isOverBudget && (
+                <div
+                  className="flex items-start gap-2 rounded-xl p-3 text-xs"
+                  style={{ background: 'rgba(245,158,11,0.1)', color: '#b45309' }}
+                >
+                  <AlertTriangle size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
+                  <span>
+                    This trip is <strong>{overBudgetPct}% over your ${params.budget.toLocaleString()} budget</strong> per person. Consider fewer nights, cheaper hotels, or a different destination.
+                  </span>
+                </div>
+              )}
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 Budget per person: ${params.budget.toLocaleString()} · Estimate for planning purposes only.
               </p>
