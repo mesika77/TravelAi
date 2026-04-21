@@ -2,7 +2,18 @@ import Groq from 'groq-sdk'
 import type { ChatMessage, TripParams } from './types'
 
 export function buildSystemPrompt(params: TripParams, nights: number): string {
-  return `You are a knowledgeable travel concierge. The user is planning a trip from ${params.origin} to ${params.destination} for ${nights} nights with ${params.adults + params.children} travelers and a budget of $${params.budget} per person. Their interests: ${params.interests.join(', ')}. Give specific, actionable recommendations for restaurants, activities, neighborhoods, day trips, and local tips. Be conversational and enthusiastic but concise. Never use bullet point walls — write in short flowing sentences.`
+  const tripDesc = params.oneWay
+    ? `a one-way trip from ${params.origin} to ${params.destination}`
+    : `a trip from ${params.origin} to ${params.destination} for ${nights} nights`
+  const budgetLine = params.oneWay ? '' : ` with a budget of $${params.budget} per person`
+  return `You are a concise travel concierge. The user is planning ${tripDesc} with ${params.adults + params.children} traveler(s)${budgetLine}. Their interests: ${params.interests.join(', ')}.
+
+Rules:
+- Keep every reply under 4 sentences or 3 short bullet points — no exceptions.
+- Be direct. Lead with the answer, skip preamble.
+- No filler phrases ("Great question!", "Of course!", "Certainly!").
+- If asked for a list, give max 3 items with one-line descriptions.
+- Never repeat information the user just told you.`
 }
 
 export async function streamChat(
@@ -21,7 +32,7 @@ export async function streamChat(
       ...messages,
     ],
     stream: true,
-    max_tokens: 1024,
+    max_tokens: 300,
   })
 
   const encoder = new TextEncoder()
