@@ -96,25 +96,28 @@ export default function SearchForm() {
   })
 
   useEffect(() => {
-    // Pre-fill destination if a card was clicked on the landing page
-    const prefill = sessionStorage.getItem('prefill_destination')
-    if (prefill) {
-      set('destination', prefill)
-      sessionStorage.removeItem('prefill_destination')
-      // Also pre-fill origin from geolocation if not already set
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
-            setDetectedCity(city)
-            setForm((f) => f.origin ? f : { ...f, origin: city })
-          },
-          () => {},
-          { timeout: 6000, maximumAge: 300_000 }
-        )
+    // Listen for destination pre-fill events dispatched by destination cards
+    const handler = (e: Event) => {
+      const city = (e as CustomEvent<{ destination: string }>).detail.destination
+      if (city) {
+        set('destination', city)
+        // Also fill origin from geolocation if not already detected
+        if (!detectedCity && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const nearest = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
+              setDetectedCity(nearest)
+              setForm((f) => f.origin ? f : { ...f, origin: nearest })
+            },
+            () => {},
+            { timeout: 6000, maximumAge: 300_000 }
+          )
+        }
       }
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    window.addEventListener('travelai:prefill', handler)
+    return () => window.removeEventListener('travelai:prefill', handler)
+  }, [detectedCity]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!navigator.geolocation) return

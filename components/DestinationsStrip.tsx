@@ -109,11 +109,9 @@ export default function DestinationsStrip() {
   }, [month])
 
   const handleClick = (city: string) => {
-    sessionStorage.setItem('prefill_destination', city)
-    const el = document.getElementById('search-section')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' })
-    }
+    // Dispatch a live event so SearchForm (already mounted) hears it immediately
+    window.dispatchEvent(new CustomEvent('travelai:prefill', { detail: { destination: city } }))
+    document.getElementById('search-section')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
