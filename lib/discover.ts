@@ -3,7 +3,7 @@ import airportsData from '@/public/data/airports.json'
 import dailyCostsData from '@/public/data/daily-costs.json'
 import type { CityData, DailyCosts, DiscoverParams, DiscoverRecommendation, DiscoverResults, VisaType } from './types'
 import { fetchWeather } from './weather'
-import { checkVisaOffline } from './visa'
+import { checkVisa, checkVisaOffline } from './visa'
 import { fetchFlights } from './serpapi'
 
 type DestinationProfile = {
@@ -458,15 +458,26 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
     .slice(0, 8)
 
   const withRouteInfo = await Promise.all(
-    topRecommendations.map(async (recommendation) => ({
-      ...recommendation,
-      ...(await buildRouteAdvisory(
-        params.origin,
-        recommendation.city,
-        recommendation.departureDate,
-        recommendation.returnDate
-      )),
-    }))
+    topRecommendations.map(async (recommendation) => {
+      const [route, liveVisa] = await Promise.allSettled([
+        buildRouteAdvisory(
+          params.origin,
+          recommendation.city,
+          recommendation.departureDate,
+          recommendation.returnDate
+        ),
+        checkVisa(params.passport, recommendation.city),
+      ])
+
+      return {
+        ...recommendation,
+        ...(route.status === 'fulfilled' ? route.value : {
+          routeMode: 'unknown' as const,
+          routeNote: `We couldn't verify live flight access for this route right now.`,
+        }),
+        visaType: liveVisa.status === 'fulfilled' ? liveVisa.value.type : recommendation.visaType,
+      }
+    })
   )
 
   return {

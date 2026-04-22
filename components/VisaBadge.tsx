@@ -41,6 +41,31 @@ const COUNTRY_NAME: Record<string, string> = {
   TH: 'Thailand', CN: 'China',
 }
 
+function visaDescription(visa: VisaResult, passportFlag: string) {
+  if (visa.type === 'free_movement') {
+    return `${passportFlag} citizens can travel freely to this destination.`
+  }
+  if (visa.type === 'visa_free') {
+    return visa.maxStay
+      ? `${passportFlag} passport holders enter visa-free for up to ${visa.maxStay}.`
+      : `${passportFlag} passport holders can enter visa-free.`
+  }
+  if (visa.type === 'e_visa') {
+    return visa.maxStay
+      ? `${passportFlag} passport holders need an eVisa. Approved stays are listed up to ${visa.maxStay}.`
+      : `${passportFlag} passport holders need an eVisa before arrival.`
+  }
+  if (visa.type === 'visa_on_arrival') {
+    return visa.maxStay
+      ? `${passportFlag} passport holders can get a visa on arrival for up to ${visa.maxStay}.`
+      : `${passportFlag} passport holders can get a visa on arrival.`
+  }
+  if (visa.type === 'visa_required') {
+    return `${passportFlag} passport holders need a visa before travel.`
+  }
+  return `${passportFlag} passport holders should verify the latest entry rules before booking.`
+}
+
 export default function VisaBadge() {
   const { params } = useTripContext()
   const [visa, setVisa] = useState<VisaResult | null>(null)
@@ -58,7 +83,11 @@ export default function VisaBadge() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void (async () => {
+      await load()
+    })()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const passportFlag = FLAG[params.passport] ?? '🌐'
   const passportName = COUNTRY_NAME[params.passport] ?? params.passport
@@ -93,12 +122,9 @@ export default function VisaBadge() {
             <span className="mono">{VISA_LABEL[visa.type]}</span>
           </div>
 
-          {visa.maxStay && (
-            <div className="serif" style={{ fontSize: 20, marginTop: 14, lineHeight: 1.3 }}>
-              {passportFlag} passport holders enter visa-free for up to{' '}
-              <span className="tabular">{visa.maxStay}</span>.
-            </div>
-          )}
+          <div className="serif" style={{ fontSize: 20, marginTop: 14, lineHeight: 1.3 }}>
+            {visaDescription(visa, passportFlag)}
+          </div>
 
           <div className="hr" />
 
