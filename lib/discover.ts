@@ -1,7 +1,7 @@
 import citiesData from '@/public/data/cities.json'
 import airportsData from '@/public/data/airports.json'
 import dailyCostsData from '@/public/data/daily-costs.json'
-import type { CityData, DailyCosts, DiscoverParams, DiscoverRecommendation, VisaType } from './types'
+import type { CityData, DailyCosts, DiscoverParams, DiscoverRecommendation, DiscoverResults, VisaType } from './types'
 import { fetchWeather } from './weather'
 import { checkVisaOffline } from './visa'
 
@@ -117,6 +117,19 @@ type ResolvedWindow = {
   summary: string
 }
 
+const REGION_ALIASES: Record<string, string[]> = {
+  'far east': ['asia'],
+  'middle east': ['middle east'],
+  mediterranean: ['europe', 'middle east', 'africa'],
+  caribbean: ['north america'],
+  southeast: ['asia'],
+  'south east asia': ['asia'],
+  'south-east asia': ['asia'],
+  east: ['asia'],
+}
+
+const STOP_WORDS = new Set(['beach', 'beaches', 'dry', 'weather', 'in', 'the', 'a', 'an', 'for', 'with', 'near'])
+
 function resolveUpcomingMonthYear(month: number) {
   const now = new Date()
   const currentMonth = now.getMonth() + 1
@@ -215,12 +228,38 @@ function interestScore(interests: string[], tags: string[]) {
   return clamp(matches / interests.length + (tags.includes('family') && interests.length > 1 ? 0.05 : 0), 0.2, 1)
 }
 
+function buildRegionTerms(query?: string) {
+  if (!query) return []
+  const normalized = query.toLowerCase().trim()
+  const expanded = new Set<string>([normalized])
+
+  for (const [phrase, aliases] of Object.entries(REGION_ALIASES)) {
+    if (normalized.includes(phrase)) {
+      aliases.forEach((alias) => expanded.add(alias))
+    }
+  }
+
+  normalized
+    .replace(/[^a-z\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token && !STOP_WORDS.has(token))
+    .forEach((token) => expanded.add(token))
+
+  return [...expanded]
+}
+
 function regionMatches(profile: DestinationProfile, city: CityData, query?: string) {
   if (!query) return true
-  const text = query.toLowerCase().trim()
-  return profile.region.toLowerCase().includes(text) ||
-    city.country.toLowerCase().includes(text) ||
-    city.name.toLowerCase().includes(text)
+  const terms = buildRegionTerms(query)
+
+  const haystacks = [
+    profile.region.toLowerCase(),
+    city.country.toLowerCase(),
+    city.name.toLowerCase(),
+    profile.tags.join(' ').toLowerCase(),
+  ]
+
+  return terms.some((term) => haystacks.some((haystack) => haystack.includes(term)))
 }
 
 function buildReasons(input: {
@@ -262,7 +301,7 @@ function buildReasons(input: {
   return reasons.slice(0, 4)
 }
 
-export async function recommendDestinations(params: DiscoverParams): Promise<{
+async function buildRecommendations(params: DiscoverParams, ignoreRegion = false): Promise<{
   recommendations: DiscoverRecommendation[]
   window: ResolvedWindow
 }> {
@@ -284,7 +323,7 @@ export async function recommendDestinations(params: DiscoverParams): Promise<{
       const cityName = cityFromKey(key)
       const city = getCity(cityName)
       if (!city || !airportCities.has(city.name.toLowerCase()) || city.name === origin.name) return null
-      if (!regionMatches(profile, city, params.regionQuery)) return null
+      if (!ignoreRegion && !regionMatches(profile, city, params.regionQuery)) return null
       const distanceKm = haversineKm(origin, city)
       const flightCost = estimatedFlightCost(distanceKm, profile.costTier, travelers)
       const totalPerPerson = estimatedTripCostPerPerson(city.name, window.nights, flightCost, profile.costTier)
@@ -371,5 +410,18 @@ export async function recommendDestinations(params: DiscoverParams): Promise<{
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 8),
     window,
+  }
+}
+
+export async function recommendDestinations(params: DiscoverParams): Promise<DiscoverResults> {
+  const primary = await buildRecommendations(params, false)
+  if (primary.recommendations.length > 0 || !params.regionQuery) {
+    return primary
+  }
+
+  const fallback = await buildRecommendations(params, true)
+  return {
+    ...fallback,
+    usedRegionFallback: true,
   }
 }

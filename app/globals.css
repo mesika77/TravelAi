@@ -404,9 +404,20 @@ em { font-style: italic; }
 .discover-title { font-size: clamp(48px, 6vw, 82px); margin-top: 10px; }
 .discover-title em { color: var(--accent); }
 .discover-desc { max-width: 620px; font-size: 16px; margin-top: 18px; }
+.discover-banner {
+  display: inline-flex; margin-top: 18px; padding: 10px 14px;
+  border-radius: 999px; border: 1px solid var(--line);
+  background: color-mix(in oklch, var(--accent) 6%, var(--paper));
+  color: var(--ink-2); font-size: 13px;
+}
 .discover-grid {
   display: grid; gap: 24px;
   padding: 10px 40px 100px;
+}
+.discover-empty {
+  padding: 28px; border: 1px solid var(--line);
+  border-radius: var(--r-lg); background: var(--paper);
+  box-shadow: 0 24px 60px -34px rgba(0,0,0,.12);
 }
 .discover-card {
   display: grid; grid-template-columns: 380px 1fr;

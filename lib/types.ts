@@ -110,6 +110,18 @@ export interface DiscoverRecommendation {
   returnDate: string
 }
 
+export interface DiscoverResults {
+  recommendations: DiscoverRecommendation[]
+  window: {
+    departureDate: string
+    returnDate: string
+    nights: number
+    month: number
+    summary: string
+  }
+  usedRegionFallback?: boolean
+}
+
 export interface Activity {
   id: string
   name: string

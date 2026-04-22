@@ -29,10 +29,12 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
 
   let recommendations
   let window
+  let usedRegionFallback = false
   try {
     const result = await recommendDestinations(search)
     recommendations = result.recommendations
     window = result.window
+    usedRegionFallback = result.usedRegionFallback ?? false
   } catch {
     notFound()
   }
@@ -69,6 +71,11 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
           <p className="discover-desc mute">
             Ranked against your timing, interests, budget, entry friction, and expected weather for that season.
           </p>
+          {usedRegionFallback && (
+            <div className="discover-banner">
+              No direct matches for “{search.regionQuery}”, so these are the closest overall fits from {search.origin}.
+            </div>
+          )}
           <div className="trip-chips">
             {search.interests.map((interest) => (
               <span key={interest} className="trip-chip">{interest}</span>
@@ -80,6 +87,19 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="discover-grid wrap">
+        {recommendations.length === 0 && (
+          <section className="discover-empty">
+            <div className="eyebrow">No results yet</div>
+            <h2 className="serif" style={{ fontSize: 42, marginTop: 8 }}>Try broadening the location phrase.</h2>
+            <p className="mute" style={{ maxWidth: 560, marginTop: 14 }}>
+              The rest of the search worked, but the location wording was too narrow for the current destination set.
+              Try a broader region like Asia, Europe, Mediterranean, or Caribbean.
+            </p>
+            <Link href="/" className="btn btn-primary" style={{ marginTop: 24 }}>
+              Start a new search <ArrowRight size={16} />
+            </Link>
+          </section>
+        )}
         {recommendations.map((recommendation, index) => {
           const tripParams: TripParams = {
             origin: search.origin,
