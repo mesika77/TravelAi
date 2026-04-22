@@ -64,6 +64,8 @@ html, body {
   font-size: 15px;
   line-height: 1.5;
   letter-spacing: -0.005em;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 body { overflow-x: hidden; transition: background .35s, color .35s; }
 h1, h2, h3, h4, .serif {
@@ -383,6 +385,7 @@ em { font-style: italic; }
 .trip-title em { color: var(--accent); }
 .trip-desc { max-width: 460px; font-size: 16px; margin-top: 22px; }
 .trip-chips { display: flex; gap: 8px; margin-top: 26px; }
+.trip-chips { flex-wrap: wrap; }
 .trip-chip {
   padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
   color: var(--ink-3); font-size: 10px; font-family: var(--f-mono);
@@ -632,6 +635,7 @@ em { font-style: italic; }
   display: grid; place-items: center;
   box-shadow: 0 12px 30px rgba(0,0,0,.18);
   transition: transform .2s;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 .chat-fab:hover { transform: scale(1.06); }
 .chat-panel {
@@ -681,7 +685,13 @@ em { font-style: italic; }
 @media (max-width: 960px) {
   .wrap, .wrap-narrow { padding: 0 24px; }
   .nav { padding: 0 24px; }
-  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero { padding: 40px 0 24px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; min-height: auto; }
+  .hero-meta { flex-wrap: wrap; gap: 20px 28px; }
+  .hero-stamp { left: 10px; bottom: 10px; transform: rotate(-2deg); }
+  .search-section { padding: 72px 0 56px; }
+  .searchform { padding: 28px 28px 24px; }
+  .sf-footer { gap: 16px; flex-wrap: wrap; }
   .trip-grid { grid-template-columns: 1fr; padding: 20px 24px 60px; }
   .discover-header { padding: 40px 24px 12px; }
   .discover-grid { padding: 10px 24px 60px; }
@@ -689,12 +699,134 @@ em { font-style: italic; }
   .discover-metrics { grid-template-columns: 1fr; }
   .discover-actions { flex-direction: column; align-items: flex-start; }
   .trip-side { position: static; }
-  .trip-header { grid-template-columns: 1fr; gap: 30px; }
+  .trip-header { grid-template-columns: 1fr; gap: 30px; padding: 42px 0 30px; }
+  .trip-bar-inner { flex-wrap: wrap; height: auto; padding: 12px 0; align-items: flex-start; }
+  .trip-route { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .trip-meta { flex-wrap: wrap; row-gap: 6px; }
+  .section-head { gap: 12px; align-items: flex-start; flex-direction: column; }
+  .flight-route { grid-template-columns: 1fr; gap: 12px; padding: 18px 20px; }
+  .route-line { width: 100%; }
+  .route-dates { text-align: left; }
+  .curr-main, .visa-meta, .curr-ref { grid-template-columns: 1fr; }
+  .curr-main { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .visa-meta { grid-template-columns: 1fr 1fr; }
   .what-grid { grid-template-columns: repeat(2, 1fr); }
   .dest-grid { grid-template-columns: repeat(2, 1fr); }
   .hotel-grid { grid-template-columns: 1fr; }
   .flight-row { grid-template-columns: 1fr 1fr; row-gap: 12px; }
-  .sf-row-toggle, .search-section-head, .discover-card-head { flex-direction: column; align-items: flex-start; }
+  .sf-row-toggle, .search-section-head, .discover-card-head, .dest-head, .foot-inner { flex-direction: column; align-items: flex-start; }
   .sf-grid-2 { grid-template-columns: 1fr; gap: 24px; }
+  .foot-inner { display: flex; }
+  .foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
   .chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 12px; }
+}
+
+@media (max-width: 720px) {
+  .wrap, .wrap-narrow { padding: 0 18px; }
+  .nav { height: 62px; padding: 0 18px; }
+  .nav-right { gap: 14px; }
+  .nav-link { display: none; }
+  .hero-title { font-size: clamp(42px, 16vw, 72px); margin-top: 14px; }
+  .hero-sub { font-size: 15px; margin-top: 18px; }
+  .hero-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .hero-photo { aspect-ratio: 5 / 6; }
+  .hero-stamp { padding: 10px 12px; max-width: 170px; }
+  .hero-marquee { margin-top: 30px; padding: 10px 0; font-size: 10px; }
+  .search-section-head { margin-bottom: 28px; gap: 16px; }
+  .searchform { padding: 22px 18px 18px; border-radius: 18px; }
+  .sf-head { margin-bottom: 22px; }
+  .sf-step { gap: 22px; }
+  .sf-helper { padding: 12px; font-size: 13px; }
+  .input, .select { font-size: 18px; padding: 12px 0; }
+  .pill-toggle { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .pill-toggle::-webkit-scrollbar { display: none; }
+  .pill-toggle button { flex: 1 0 auto; min-width: max-content; }
+  .stepper span { font-size: 24px; }
+  .sf-footer { flex-direction: column; align-items: stretch; }
+  .sf-footer .btn { width: 100%; justify-content: center; }
+  .what-section, .dest-strip, .foot { padding: 56px 0 32px; }
+  .what-grid { grid-template-columns: 1fr; }
+  .what-cell { min-height: auto; padding: 24px 20px; }
+  .dest-grid { grid-template-columns: 1fr; }
+  .trip-title, .discover-title { font-size: clamp(38px, 14vw, 58px); }
+  .trip-desc, .discover-desc { font-size: 15px; }
+  .trip-grid { padding: 12px 18px 48px; gap: 24px; }
+  .trip-main { gap: 42px; }
+  .sec-sm { padding: 18px; }
+  .section-title { font-size: 34px; }
+  .flight-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px 16px 16px;
+  }
+  .best-ribbon { left: 14px; }
+  .flight-airline, .flight-price { align-items: flex-start; }
+  .flight-times { text-align: left; }
+  .flight-co2 { justify-self: flex-start; }
+  .hotel-body { padding: 16px; }
+  .act-cat { margin-bottom: 22px; }
+  .act-item { align-items: flex-start; }
+  .weather-chart { gap: 6px; height: 100px; }
+  .curr-ref { grid-template-columns: 1fr; gap: 6px; }
+  .discover-grid { padding: 8px 18px 48px; gap: 18px; }
+  .discover-card { border-radius: 18px; }
+  .discover-card-media { min-height: 250px; }
+  .discover-card-body { padding: 20px 18px 18px; gap: 18px; }
+  .discover-card-head { padding-bottom: 14px; }
+  .discover-score { left: 12px; bottom: 12px; min-width: 92px; padding: 10px 12px; }
+  .discover-score .serif { font-size: 22px; }
+  .discover-banner { display: block; border-radius: 18px; font-size: 12px; }
+  .discover-reasons { gap: 8px; }
+  .discover-reason { width: 100%; border-radius: 16px; }
+  .foot-cols { grid-template-columns: 1fr; gap: 24px; }
+  .foot-bottom { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0)); }
+  .chat-fab {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0));
+    width: 52px;
+    height: 52px;
+  }
+  .chat-panel {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+  .chat-header { padding-top: calc(16px + env(safe-area-inset-top, 0)); }
+  .chat-input-row { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0)); }
+}
+
+@media (max-width: 560px) {
+  .mono { font-size: 0.72em; }
+  .hero { padding-top: 28px; }
+  .hero-meta { grid-template-columns: 1fr; gap: 14px; }
+  .hero-stamp { position: static; margin-top: 12px; transform: none; max-width: none; }
+  .search-section { padding: 56px 0 40px; }
+  .searchform { padding: 18px 14px 16px; }
+  .field-label, .eyebrow, .kicker { letter-spacing: 0.12em; }
+  .input, .select { font-size: 16px; }
+  .chip { padding: 10px 12px; font-size: 12px; }
+  .trip-bar { top: 62px; }
+  .trip-bar-inner { gap: 10px; }
+  .trip-route .serif { font-size: 16px !important; }
+  .trip-meta { font-size: 10px; }
+  .trip-header { padding-top: 30px; }
+  .trip-chip { font-size: 9px; }
+  .section-title { font-size: 30px; }
+  .flight-route { padding: 16px 14px; }
+  .flight-row { border-radius: 16px; }
+  .discover-header { padding: 30px 18px 10px; }
+  .discover-card-media { min-height: 210px; }
+  .discover-rank { top: 12px; left: 12px; }
+  .discover-metric { padding: 12px 13px; }
+  .discover-metric strong { font-size: 16px; }
+  .discover-loading-title { height: 42px; }
+  .discover-loading-pill { width: 100%; }
+  .chat-body { padding: 14px; }
+  .chat-bubble { font-size: 13px; }
 }
