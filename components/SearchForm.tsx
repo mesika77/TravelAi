@@ -2,12 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, ArrowLeft, Minus, Plus, LocateFixed } from 'lucide-react'
-import { encodeTripId } from '@/lib/encode'
-import type { TripParams } from '@/lib/types'
+import { ArrowRight, ArrowLeft, Minus, Plus, LocateFixed, Compass } from 'lucide-react'
+import { encodeDiscoverId, encodeTripId } from '@/lib/encode'
+import type { DiscoverDateMode, DiscoverParams, TripParams } from '@/lib/types'
 import CityAutocomplete from './CityAutocomplete'
 import citiesData from '@/public/data/cities.json'
 import airportsData from '@/public/data/airports.json'
+
+type SearchMode = 'trip' | 'discover'
+
+interface SearchDraft {
+  origin: string
+  destination: string
+  departureDate: string
+  returnDate: string
+  flexibleMonth: string
+  tripLengthNights: number
+  adults: number
+  children: number
+  budget: number
+  passport: string
+  interests: string[]
+  regionQuery: string
+  beachPriority: boolean
+}
 
 const airportCities = new Set(
   (airportsData as { city: string }[]).map((a) => a.city.toLowerCase())
@@ -16,6 +34,12 @@ const airportCities = new Set(
 const citiesWithAirports = (citiesData as { name: string; lat: number; lon: number }[]).filter(
   (c) => airportCities.has(c.name.toLowerCase())
 )
+
+function nextMonthValue() {
+  const base = new Date()
+  base.setMonth(base.getMonth() + 1)
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`
+}
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371
@@ -81,33 +105,47 @@ const COUNTRIES = [
   { code: 'TH', name: 'Thailand' },
 ]
 
+const TRIP_LENGTHS = [3, 4, 5, 7, 10, 14]
+
 export default function SearchForm() {
   const router = useRouter()
   const [step, setStep] = useState(0)
+  const [searchMode, setSearchMode] = useState<SearchMode>('trip')
+  const [dateMode, setDateMode] = useState<DiscoverDateMode>('exact')
   const [oneWay, setOneWay] = useState(false)
   const [detectedCity, setDetectedCity] = useState<string | null>(null)
   const [locating, setLocating] = useState(false)
-  const [form, setForm] = useState<Partial<TripParams>>({
+  const [form, setForm] = useState<SearchDraft>({
+    origin: '',
+    destination: '',
+    departureDate: '',
+    returnDate: '',
+    flexibleMonth: nextMonthValue(),
+    tripLengthNights: 7,
     adults: 2,
     children: 0,
     budget: 2000,
     passport: 'US',
     interests: [],
+    regionQuery: '',
+    beachPriority: false,
   })
 
+  const setField = <K extends keyof SearchDraft>(key: K, val: SearchDraft[K]) =>
+    setForm((current) => ({ ...current, [key]: val }))
+
   useEffect(() => {
-    // Listen for destination pre-fill events dispatched by destination cards
     const handler = (e: Event) => {
       const city = (e as CustomEvent<{ destination: string }>).detail.destination
       if (city) {
-        set('destination', city)
-        // Also fill origin from geolocation if not already detected
+        setSearchMode('trip')
+        setField('destination', city)
         if (!detectedCity && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               const nearest = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
               setDetectedCity(nearest)
-              setForm((f) => ({ ...f, origin: nearest }))
+              setForm((current) => ({ ...current, origin: nearest }))
             },
             () => {},
             { timeout: 6000, maximumAge: 300_000 }
@@ -117,16 +155,15 @@ export default function SearchForm() {
     }
     window.addEventListener('travelai:prefill', handler)
     return () => window.removeEventListener('travelai:prefill', handler)
-  }, [detectedCity]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [detectedCity])
 
   useEffect(() => {
     if (!navigator.geolocation) return
-    setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
         setDetectedCity(city)
-        setForm((f) => ({ ...f, origin: city }))
+        setForm((current) => ({ ...current, origin: current.origin || city }))
         setLocating(false)
       },
       () => setLocating(false),
@@ -134,38 +171,61 @@ export default function SearchForm() {
     )
   }, [])
 
-  const set = (key: keyof TripParams, val: unknown) =>
-    setForm((f) => ({ ...f, [key]: val }))
-
   const toggleInterest = (id: string) => {
-    const current = form.interests ?? []
-    set('interests', current.includes(id) ? current.filter((i) => i !== id) : [...current, id])
+    const current = form.interests
+    setField('interests', current.includes(id) ? current.filter((i) => i !== id) : [...current, id])
   }
 
   const handleSubmit = () => {
-    const params: TripParams = {
-      origin: form.origin ?? '',
-      destination: form.destination ?? '',
-      departureDate: form.departureDate ?? '',
-      returnDate: oneWay ? (form.departureDate ?? '') : (form.returnDate ?? ''),
-      oneWay,
-      adults: form.adults ?? 2,
-      children: form.children ?? 0,
-      budget: form.budget ?? 2000,
-      passport: form.passport ?? 'US',
-      interests: form.interests ?? [],
+    if (searchMode === 'trip') {
+      const params: TripParams = {
+        origin: form.origin,
+        destination: form.destination,
+        departureDate: form.departureDate,
+        returnDate: oneWay ? form.departureDate : form.returnDate,
+        oneWay,
+        adults: form.adults,
+        children: form.children,
+        budget: form.budget,
+        passport: form.passport,
+        interests: form.interests,
+      }
+      router.push(`/trip/${encodeTripId(params)}`)
+      return
     }
-    const id = encodeTripId(params)
-    router.push(`/trip/${id}`)
+
+    const params: DiscoverParams = {
+      searchMode: 'discover',
+      origin: form.origin,
+      departureDate: dateMode === 'exact' ? form.departureDate : undefined,
+      returnDate: dateMode === 'exact' ? form.returnDate : undefined,
+      flexibleMonth: dateMode === 'flexible' ? form.flexibleMonth : undefined,
+      tripLengthNights: dateMode === 'flexible'
+        ? form.tripLengthNights
+        : Math.max(1, Math.round((new Date(form.returnDate).getTime() - new Date(form.departureDate).getTime()) / 86400000)),
+      adults: form.adults,
+      children: form.children,
+      budget: form.budget,
+      passport: form.passport,
+      interests: form.interests,
+      regionQuery: form.regionQuery || undefined,
+      beachPriority: form.beachPriority,
+    }
+    router.push(`/discover/${encodeDiscoverId(params)}`)
   }
 
-  const canNext0 = form.origin && form.destination && form.departureDate && (oneWay || form.returnDate)
-  const canNext1 = (form.adults ?? 0) > 0 && (oneWay || (form.budget ?? 0) > 0)
-  const canSubmit = canNext1 && form.passport && (form.interests?.length ?? 0) > 0
+  const canNextTrip = form.origin && form.destination && form.departureDate && (oneWay || form.returnDate)
+  const canNextDiscover = form.origin && (
+    dateMode === 'exact'
+      ? Boolean(form.departureDate && form.returnDate)
+      : Boolean(form.flexibleMonth && form.tripLengthNights > 0)
+  )
+  const canNext0 = searchMode === 'trip' ? canNextTrip : canNextDiscover
+  const canNext1 = form.adults > 0 && (searchMode === 'discover' || oneWay || form.budget > 0)
+  const canSubmit = canNext1 && Boolean(form.passport) && form.interests.length > 0
 
   return (
     <div className="searchform">
-      {/* Progress indicator */}
       <div className="sf-head">
         <div className="sf-dots">
           {[0, 1, 2].map((i) => (
@@ -183,15 +243,49 @@ export default function SearchForm() {
         <div className="sf-step-label mono">Step {step + 1} / 3</div>
       </div>
 
-      {/* Step 0: Where & when */}
       {step === 0 && (
         <div className="sf-step fade-up">
           <div className="sf-row-toggle">
             <div>
               <div className="eyebrow">01 — Itinerary</div>
-              <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>Where &amp; when.</h2>
+              <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>
+                {searchMode === 'trip' ? 'Where & when.' : 'Start from home, not from a pin.'}
+              </h2>
             </div>
             <div className="pill-toggle">
+              <button
+                type="button"
+                className={searchMode === 'trip' ? 'active' : ''}
+                onClick={() => setSearchMode('trip')}
+              >
+                Pick a city
+              </button>
+              <button
+                type="button"
+                className={searchMode === 'discover' ? 'active' : ''}
+                onClick={() => {
+                  setSearchMode('discover')
+                  setOneWay(false)
+                }}
+              >
+                I don&apos;t know where to fly
+              </button>
+            </div>
+          </div>
+
+          <div className="sf-helper">
+            <div className="sf-helper-icon">
+              <Compass size={16} strokeWidth={1.8} />
+            </div>
+            <div>
+              {searchMode === 'trip'
+                ? 'Plan around a destination you already have in mind.'
+                : 'We’ll suggest destinations that fit your timing, budget, interests, weather, and how realistic the flight is from your departure city.'}
+            </div>
+          </div>
+
+          {searchMode === 'trip' && (
+            <div className="pill-toggle" style={{ alignSelf: 'flex-start' }}>
               <button
                 type="button"
                 className={!oneWay ? 'active' : ''}
@@ -207,7 +301,7 @@ export default function SearchForm() {
                 One way
               </button>
             </div>
-          </div>
+          )}
 
           <div className="sf-grid-2">
             <div>
@@ -226,50 +320,111 @@ export default function SearchForm() {
               </div>
               <CityAutocomplete
                 placeholder="New York"
-                value={form.origin ?? ''}
-                onChange={(val) => set('origin', val)}
+                value={form.origin}
+                onChange={(val) => setField('origin', val)}
               />
             </div>
-            <CityAutocomplete
-              label="To"
-              placeholder="Lisbon"
-              value={form.destination ?? ''}
-              onChange={(val) => set('destination', val)}
-            />
-          </div>
 
-          <div className={oneWay ? 'sf-grid-1' : 'sf-grid-2'}>
-            <div className="field">
-              <div className="field-label">Departure</div>
-              <input
-                className="input"
-                type="date"
-                value={form.departureDate ?? ''}
-                onChange={(e) => {
-                  const dep = e.target.value
-                  set('departureDate', dep)
-                  if (dep && (!form.returnDate || form.returnDate < dep)) {
-                    set('returnDate', dep)
-                  }
-                }}
+            {searchMode === 'trip' ? (
+              <CityAutocomplete
+                label="To"
+                placeholder="Lisbon"
+                value={form.destination}
+                onChange={(val) => setField('destination', val)}
               />
-            </div>
-            {!oneWay && (
+            ) : (
               <div className="field">
-                <div className="field-label">Return</div>
+                <div className="field-label">Country or region</div>
                 <input
                   className="input"
-                  type="date"
-                  min={form.departureDate}
-                  value={form.returnDate ?? ''}
-                  onChange={(e) => set('returnDate', e.target.value)}
+                  value={form.regionQuery}
+                  placeholder="Europe, Japan, beach in Mexico…"
+                  onChange={(e) => setField('regionQuery', e.target.value)}
                 />
+                <div className="mono mute">Optional. Leave blank to search broadly.</div>
               </div>
             )}
           </div>
 
+          {searchMode === 'discover' && (
+            <div className="pill-toggle" style={{ alignSelf: 'flex-start' }}>
+              <button
+                type="button"
+                className={dateMode === 'exact' ? 'active' : ''}
+                onClick={() => setDateMode('exact')}
+              >
+                Exact dates
+              </button>
+              <button
+                type="button"
+                className={dateMode === 'flexible' ? 'active' : ''}
+                onClick={() => setDateMode('flexible')}
+              >
+                Flexible month
+              </button>
+            </div>
+          )}
+
+          {searchMode === 'trip' || dateMode === 'exact' ? (
+            <div className={oneWay ? 'sf-grid-1' : 'sf-grid-2'}>
+              <div className="field">
+                <div className="field-label">Departure</div>
+                <input
+                  className="input"
+                  type="date"
+                  value={form.departureDate}
+                  onChange={(e) => {
+                    const dep = e.target.value
+                    setField('departureDate', dep)
+                    if (dep && (!form.returnDate || form.returnDate < dep)) {
+                      setField('returnDate', dep)
+                    }
+                  }}
+                />
+              </div>
+              {!oneWay && (
+                <div className="field">
+                  <div className="field-label">{searchMode === 'trip' ? 'Return' : 'Back by'}</div>
+                  <input
+                    className="input"
+                    type="date"
+                    min={form.departureDate}
+                    value={form.returnDate}
+                    onChange={(e) => setField('returnDate', e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="sf-grid-2">
+              <div className="field">
+                <div className="field-label">Month</div>
+                <input
+                  className="input"
+                  type="month"
+                  value={form.flexibleMonth}
+                  onChange={(e) => setField('flexibleMonth', e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <div className="field-label">Trip length</div>
+                <select
+                  className="select"
+                  value={String(form.tripLengthNights)}
+                  onChange={(e) => setField('tripLengthNights', Number(e.target.value))}
+                >
+                  {TRIP_LENGTHS.map((nights) => (
+                    <option key={nights} value={nights}>{nights} nights</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           <div className="sf-footer">
-            <span className="mono mute">Press next or ↵</span>
+            <span className="mono mute">
+              {searchMode === 'trip' ? 'We’ll build a full trip page.' : 'We’ll rank destinations and explain the fit.'}
+            </span>
             <button
               type="button"
               className="btn btn-primary"
@@ -282,23 +437,24 @@ export default function SearchForm() {
         </div>
       )}
 
-      {/* Step 1: Who's coming */}
       {step === 1 && (
         <div className="sf-step fade-up">
           <div>
             <div className="eyebrow">02 — Party</div>
-            <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>Who&apos;s coming along?</h2>
+            <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>
+              {searchMode === 'trip' ? 'Who&apos;s coming along?' : 'Who are we optimizing for?'}
+            </h2>
           </div>
 
           <div className="sf-grid-2">
             <div className="field">
               <div className="field-label">Adults</div>
               <div className="stepper">
-                <button type="button" onClick={() => set('adults', Math.max(1, (form.adults ?? 1) - 1))}>
+                <button type="button" onClick={() => setField('adults', Math.max(1, form.adults - 1))}>
                   <Minus size={14} />
                 </button>
-                <span className="tabular">{form.adults ?? 1}</span>
-                <button type="button" onClick={() => set('adults', (form.adults ?? 1) + 1)}>
+                <span className="tabular">{form.adults}</span>
+                <button type="button" onClick={() => setField('adults', form.adults + 1)}>
                   <Plus size={14} />
                 </button>
               </div>
@@ -306,27 +462,29 @@ export default function SearchForm() {
             <div className="field">
               <div className="field-label">Children</div>
               <div className="stepper">
-                <button type="button" onClick={() => set('children', Math.max(0, (form.children ?? 0) - 1))}>
+                <button type="button" onClick={() => setField('children', Math.max(0, form.children - 1))}>
                   <Minus size={14} />
                 </button>
-                <span className="tabular">{form.children ?? 0}</span>
-                <button type="button" onClick={() => set('children', (form.children ?? 0) + 1)}>
+                <span className="tabular">{form.children}</span>
+                <button type="button" onClick={() => setField('children', form.children + 1)}>
                   <Plus size={14} />
                 </button>
               </div>
             </div>
           </div>
 
-          {!oneWay && (
+          {(searchMode === 'discover' || !oneWay) && (
             <div className="field">
               <div className="field-label">Budget per person · USD</div>
               <input
                 className="input tabular"
                 type="number"
-                value={form.budget ?? 2000}
-                onChange={(e) => set('budget', +e.target.value)}
+                value={form.budget}
+                onChange={(e) => setField('budget', Number(e.target.value))}
               />
-              <div className="mono mute" style={{ marginTop: 4 }}>Includes flight, stay, and daily spend</div>
+              <div className="mono mute" style={{ marginTop: 4 }}>
+                {searchMode === 'discover' ? 'Used to filter flight + stay realism.' : 'Includes flight, stay, and daily spend.'}
+              </div>
             </div>
           )}
 
@@ -346,32 +504,46 @@ export default function SearchForm() {
         </div>
       )}
 
-      {/* Step 2: Preferences */}
       {step === 2 && (
         <div className="sf-step fade-up">
           <div>
             <div className="eyebrow">03 — Preferences</div>
-            <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>Tell us what you love.</h2>
+            <h2 className="serif" style={{ fontSize: 38, marginTop: 6 }}>
+              {searchMode === 'trip' ? 'Tell us what you love.' : 'Describe the trip you want to find.'}
+            </h2>
           </div>
 
-          <div className="field">
-            <div className="field-label">Passport</div>
-            <select
-              className="select"
-              value={form.passport ?? 'US'}
-              onChange={(e) => set('passport', e.target.value)}
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>{c.name}</option>
-              ))}
-            </select>
+          <div className="sf-grid-2">
+            <div className="field">
+              <div className="field-label">Passport</div>
+              <select
+                className="select"
+                value={form.passport}
+                onChange={(e) => setField('passport', e.target.value)}
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {searchMode === 'discover' && (
+              <button
+                type="button"
+                className={'chip' + (form.beachPriority ? ' on' : '')}
+                style={{ alignSelf: 'end', justifyContent: 'center', minHeight: 56 }}
+                onClick={() => setField('beachPriority', !form.beachPriority)}
+              >
+                {form.beachPriority ? 'Dry beach weather only' : 'Beach weather matters'}
+              </button>
+            )}
           </div>
 
           <div>
             <div className="field-label" style={{ marginBottom: 12 }}>Interests · pick at least one</div>
             <div className="chipwrap">
               {INTERESTS.map((interest) => {
-                const on = form.interests?.includes(interest.id)
+                const on = form.interests.includes(interest.id)
                 return (
                   <button
                     key={interest.id}
@@ -397,7 +569,7 @@ export default function SearchForm() {
               disabled={!canSubmit}
               onClick={handleSubmit}
             >
-              Plan my trip <ArrowRight size={16} />
+              {searchMode === 'trip' ? 'Plan my trip' : 'Show matching destinations'} <ArrowRight size={16} />
             </button>
           </div>
         </div>

@@ -11,6 +11,24 @@ export interface TripParams {
   interests: string[]
 }
 
+export type DiscoverDateMode = 'exact' | 'flexible'
+
+export interface DiscoverParams {
+  searchMode: 'discover'
+  origin: string
+  departureDate?: string
+  returnDate?: string
+  flexibleMonth?: string
+  tripLengthNights: number
+  adults: number
+  children: number
+  budget: number
+  passport: string
+  interests: string[]
+  regionQuery?: string
+  beachPriority?: boolean
+}
+
 export interface FlightLeg {
   airline: string
   flightNumber?: string
@@ -70,6 +88,26 @@ export interface WeatherResult {
   avgHigh: number
   avgLow: number
   avgRain: number
+}
+
+export interface DiscoverRecommendation {
+  city: string
+  country: string
+  countryCode: string
+  region: string
+  matchScore: number
+  distanceKm: number
+  flightHours: number
+  avgHigh: number
+  avgLow: number
+  avgRain: number
+  estimatedFlight: number
+  estimatedTotalPerPerson: number
+  visaType: VisaType
+  tags: string[]
+  reasons: string[]
+  departureDate: string
+  returnDate: string
 }
 
 export interface Activity {

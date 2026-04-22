@@ -60,6 +60,12 @@ function csvFallback(passportName: string, destinationName: string): VisaResult 
   return { type: 'unknown', passportCountry: passportName, destinationCountry: destinationName }
 }
 
+export function checkVisaOffline(passport: string, destinationCountry: string): VisaResult {
+  const passportCode = passport.toUpperCase()
+  const passportName = PASSPORT_NAMES[passportCode] ?? passport
+  return csvFallback(passportName, destinationCountry)
+}
+
 export async function checkVisa(passport: string, destination: string): Promise<VisaResult> {
   const passportCode = passport.toUpperCase()
   const passportName = PASSPORT_NAMES[passportCode] ?? passport
