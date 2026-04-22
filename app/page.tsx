@@ -1,4 +1,6 @@
 import SearchForm from '@/components/SearchForm'
+import DestinationsStrip from '@/components/DestinationsStrip'
+import DestinationPhoto from '@/components/DestinationPhoto'
 import {
   Plane, Shield, Building2, Cloud, Compass, Coins, Sparkles,
 } from 'lucide-react'
@@ -11,13 +13,6 @@ const WHAT_ITEMS = [
   { n: '05', t: 'Activities', d: 'Google Maps places scored against your declared interests.', Icon: Compass },
   { n: '06', t: 'Currency', d: 'Live rates. Your budget, in their pocket.', Icon: Coins },
   { n: '07', t: 'Concierge', d: 'Llama 3.3 with full trip context loaded. Streams in milliseconds.', Icon: Sparkles },
-]
-
-const DESTINATIONS = [
-  { city: 'Lisbon', country: 'Portugal', temp: '21°', from: 'from $642' },
-  { city: 'Kyoto', country: 'Japan', temp: '19°', from: 'from $1,120' },
-  { city: 'Marrakech', country: 'Morocco', temp: '27°', from: 'from $780' },
-  { city: 'Reykjavík', country: 'Iceland', temp: '11°', from: 'from $520' },
 ]
 
 export default function HomePage() {
@@ -57,7 +52,12 @@ export default function HomePage() {
           </div>
 
           <div className="hero-right">
-            <div className="photo hero-photo" data-label="Destination photography" />
+            <DestinationPhoto
+              city="Lisbon"
+              query="rooftops golden hour travel"
+              className="hero-photo"
+              style={{ borderRadius: 'var(--r-lg)' }}
+            />
             <div className="hero-stamp">
               <div className="mono" style={{ fontSize: 9, letterSpacing: '.2em' }}>Boarding · 2026</div>
               <div className="serif" style={{ fontSize: 28, fontStyle: 'italic' }}>Lisbon</div>
@@ -73,7 +73,7 @@ export default function HomePage() {
       </section>
 
       {/* SEARCH */}
-      <section className="wrap search-section">
+      <section className="wrap search-section" id="search-section">
         <div className="search-section-head">
           <div>
             <div className="eyebrow">Begin here</div>
@@ -108,29 +108,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* DESTINATIONS STRIP */}
-      <section className="dest-strip">
-        <div className="wrap">
-          <div className="dest-head">
-            <div className="eyebrow">In season</div>
-            <div className="mono mute">May · 2026</div>
-          </div>
-          <div className="dest-grid">
-            {DESTINATIONS.map((d) => (
-              <a key={d.city} className="dest-card" href="#search">
-                <div className="photo dest-photo" data-label={d.city} />
-                <div className="dest-meta">
-                  <div className="serif" style={{ fontSize: 22 }}>{d.city}</div>
-                  <div className="mono mute" style={{ fontSize: 11 }}>{d.country} · {d.temp} avg</div>
-                  <div className="serif" style={{ fontSize: 14, color: 'var(--accent)', marginTop: 10 }}>
-                    {d.from} →
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* DESTINATIONS STRIP — dynamic per location + season */}
+      <DestinationsStrip />
 
       {/* FOOTER */}
       <footer className="foot">
@@ -148,7 +127,7 @@ export default function HomePage() {
             <div>
               <div className="mono mute" style={{ marginBottom: 10 }}>Product</div>
               <a href="/">Plan a trip</a>
-              <a href="#search">Search</a>
+              <a href="#search-section">Search</a>
               <a href="#concierge">Concierge</a>
             </div>
             <div>

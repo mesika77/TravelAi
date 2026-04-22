@@ -96,6 +96,15 @@ export default function SearchForm() {
   })
 
   useEffect(() => {
+    // Pre-fill destination if a card was clicked on the landing page
+    const prefill = sessionStorage.getItem('prefill_destination')
+    if (prefill) {
+      set('destination', prefill)
+      sessionStorage.removeItem('prefill_destination')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (!navigator.geolocation) return
     setLocating(true)
     navigator.geolocation.getCurrentPosition(

@@ -11,6 +11,7 @@ import TripCostSummary from '@/components/TripCostSummary'
 import WeatherWidget from '@/components/WeatherWidget'
 import CurrencyWidget from '@/components/CurrencyWidget'
 import ChatBot from '@/components/ChatBot'
+import DestinationPhoto from '@/components/DestinationPhoto'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -79,7 +80,12 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
         <div className="trip-header-right">
-          <div className="photo trip-hero" data-label={`${dest} · photography`} />
+          <DestinationPhoto
+            city={dest}
+            query="travel city landmark"
+            className="trip-hero"
+            style={{ borderRadius: 'var(--r-lg)' }}
+          />
         </div>
       </div>
 

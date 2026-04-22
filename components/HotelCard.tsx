@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { RefreshCw, ExternalLink } from 'lucide-react'
 import { useTripContext } from './TripContextProvider'
 import type { HotelsResult } from '@/lib/types'
+import DestinationPhoto from './DestinationPhoto'
 
 function SkeletonCard() {
   return (
@@ -84,7 +85,12 @@ export default function HotelCard() {
                 const stars = Math.round(hotel.rating ?? 0)
                 return (
                   <div key={hotel.key} className="hotel-card">
-                    <div className="photo hotel-photo" data-label={hotel.name} />
+                    <DestinationPhoto
+                      city={params.destination}
+                      query={`hotel ${hotel.name}`}
+                      className="hotel-photo"
+                      style={{ aspectRatio: '4/3', borderRadius: 0 }}
+                    />
                     <div className="hotel-body">
                       <div className="mono mute">{params.destination}</div>
                       <div className="serif" style={{ fontSize: 20, marginTop: 4 }}>{hotel.name}</div>
