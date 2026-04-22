@@ -107,7 +107,7 @@ export default function SearchForm() {
             (pos) => {
               const nearest = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
               setDetectedCity(nearest)
-              setForm((f) => f.origin ? f : { ...f, origin: nearest })
+              setForm((f) => ({ ...f, origin: nearest }))
             },
             () => {},
             { timeout: 6000, maximumAge: 300_000 }
@@ -126,11 +126,11 @@ export default function SearchForm() {
       (pos) => {
         const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
         setDetectedCity(city)
-        setForm((f) => f.origin ? f : { ...f, origin: city })
+        setForm((f) => ({ ...f, origin: city }))
         setLocating(false)
       },
       () => setLocating(false),
-      { timeout: 6000, maximumAge: 300_000 }
+      { timeout: 10000, maximumAge: 300_000, enableHighAccuracy: false }
     )
   }, [])
 
@@ -245,7 +245,13 @@ export default function SearchForm() {
                 className="input"
                 type="date"
                 value={form.departureDate ?? ''}
-                onChange={(e) => set('departureDate', e.target.value)}
+                onChange={(e) => {
+                  const dep = e.target.value
+                  set('departureDate', dep)
+                  if (dep && (!form.returnDate || form.returnDate < dep)) {
+                    set('returnDate', dep)
+                  }
+                }}
               />
             </div>
             {!oneWay && (
@@ -254,6 +260,7 @@ export default function SearchForm() {
                 <input
                   className="input"
                   type="date"
+                  min={form.departureDate}
                   value={form.returnDate ?? ''}
                   onChange={(e) => set('returnDate', e.target.value)}
                 />
