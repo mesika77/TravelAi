@@ -130,6 +130,7 @@ const REGION_ALIASES: Record<string, string[]> = {
 }
 
 const STOP_WORDS = new Set(['beach', 'beaches', 'dry', 'weather', 'in', 'the', 'a', 'an', 'for', 'with', 'near'])
+const DIRECTION_WORDS = new Set(['north', 'south', 'east', 'west', 'central'])
 
 function resolveUpcomingMonthYear(month: number) {
   const now = new Date()
@@ -233,6 +234,10 @@ function buildRegionTerms(query?: string) {
   if (!query) return []
   const normalized = query.toLowerCase().trim()
   const expanded = new Set<string>([normalized])
+  const cleanedTokens = normalized
+    .replace(/[^a-z\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token && !STOP_WORDS.has(token))
 
   for (const [phrase, aliases] of Object.entries(REGION_ALIASES)) {
     if (normalized.includes(phrase)) {
@@ -240,11 +245,11 @@ function buildRegionTerms(query?: string) {
     }
   }
 
-  normalized
-    .replace(/[^a-z\s-]/g, ' ')
-    .split(/\s+/)
-    .filter((token) => token && !STOP_WORDS.has(token))
-    .forEach((token) => expanded.add(token))
+  const isMultiWord = cleanedTokens.length > 1
+  cleanedTokens.forEach((token) => {
+    if (isMultiWord && DIRECTION_WORDS.has(token)) return
+    expanded.add(token)
+  })
 
   return [...expanded]
 }
