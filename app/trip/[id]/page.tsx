@@ -82,7 +82,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
         <div className="trip-header-right">
           <DestinationPhoto
             city={dest}
-            query="travel city landmark"
+            query={`${dest} landmark travel`}
             className="trip-hero"
             style={{ borderRadius: 'var(--r-lg)' }}
           />
