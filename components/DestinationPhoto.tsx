@@ -1,52 +1,55 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Props {
   city: string
   className?: string
   style?: React.CSSProperties
-  aspect?: string   // e.g. "3/4" "4/3" "1/1"
-  query?: string    // extra search terms appended to city
+  query?: string
 }
 
-// Stable per-city seed so the same city always gets the same Unsplash photo in a session
-const cache = new Map<string, string>()
+// Session-level cache so each city only hits /api/photo once per page load
+const resolved = new Map<string, string>()
 
-function unsplashUrl(city: string, query: string, w: number, h: number) {
-  const q = encodeURIComponent(`${city} ${query}`)
-  return `https://source.unsplash.com/featured/${w}x${h}/?${q}`
-}
-
-export default function DestinationPhoto({ city, className = '', style, aspect, query = 'travel city' }: Props) {
+export default function DestinationPhoto({ city, className = '', style, query = 'travel' }: Props) {
   const cacheKey = `${city}::${query}`
-  const [src] = useState(() => {
-    if (cache.has(cacheKey)) return cache.get(cacheKey)!
-    const url = unsplashUrl(city, query, 800, 600)
-    cache.set(cacheKey, url)
-    return url
-  })
+  const [url, setUrl] = useState<string | null>(resolved.get(cacheKey) ?? null)
   const [failed, setFailed] = useState(false)
 
-  if (failed) {
-    // Fall back to the CSS placeholder
+  useEffect(() => {
+    if (resolved.has(cacheKey)) return
+    fetch(`/api/photo?city=${encodeURIComponent(city)}&query=${encodeURIComponent(query)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.url) {
+          resolved.set(cacheKey, d.url)
+          setUrl(d.url)
+        }
+      })
+      .catch(() => setFailed(true))
+  }, [cacheKey, city, query])
+
+  if (failed || (!url && typeof window !== 'undefined')) {
     return <div className={`photo ${className}`} data-label={city} style={style} />
+  }
+
+  if (!url) {
+    // Show shimmer while loading
+    return <div className={`shimmer ${className}`} style={{ borderRadius: 'var(--r-sm)', ...style }} />
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={url}
       alt={city}
       className={className}
       loading="lazy"
-      referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
+      onError={() => { setFailed(true) }}
       style={{
         objectFit: 'cover',
         width: '100%',
-        aspectRatio: aspect,
-        borderRadius: 'inherit',
         display: 'block',
         ...style,
       }}
