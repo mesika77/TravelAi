@@ -414,6 +414,20 @@ em { font-style: italic; }
   display: grid; gap: 24px;
   padding: 10px 40px 100px;
 }
+.discover-loading-line {
+  height: 16px; border-radius: 999px; width: 220px;
+}
+.discover-loading-line-mid { width: 160px; }
+.discover-loading-line-short { width: 110px; }
+.discover-loading-title {
+  height: 56px; border-radius: 20px; width: min(100%, 460px); margin-top: 12px;
+}
+.discover-loading-pill {
+  width: 220px; height: 46px; border-radius: 999px;
+}
+.discover-loading-button {
+  width: 170px; height: 58px; border-radius: var(--r);
+}
 .discover-empty {
   padding: 28px; border: 1px solid var(--line);
   border-radius: var(--r-lg); background: var(--paper);

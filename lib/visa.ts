@@ -55,7 +55,7 @@ function csvFallback(passportName: string, destinationName: string): VisaResult 
   try {
     const csvPath = path.join(process.cwd(), 'public', 'data', 'passport-index.csv')
     const content = readFileSync(csvPath, 'utf-8')
-    const { data } = Papa.parse<{ Passport: string; Destination: string; Value: string }>(content, {
+    const { data } = Papa.parse<{ Passport: string; Destination: string; Requirement?: string; Value?: string }>(content, {
       header: true,
       skipEmptyLines: true,
     })
@@ -68,7 +68,7 @@ function csvFallback(passportName: string, destinationName: string): VisaResult 
     )
     if (row) {
       return {
-        type: mapVisaType(row.Value ?? ''),
+        type: mapVisaType(row.Requirement ?? row.Value ?? ''),
         passportCountry: normalizeCountryName(passportName),
         destinationCountry: normalizeCountryName(destinationName),
       }
