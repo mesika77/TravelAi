@@ -4,6 +4,7 @@ import dailyCostsData from '@/public/data/daily-costs.json'
 import type { CityData, DailyCosts, DiscoverParams, DiscoverRecommendation, DiscoverResults, VisaType } from './types'
 import { fetchWeather } from './weather'
 import { checkVisaOffline } from './visa'
+import { fetchFlights } from './serpapi'
 
 type DestinationProfile = {
   region: string
@@ -301,6 +302,37 @@ function buildReasons(input: {
   return reasons.slice(0, 4)
 }
 
+async function buildRouteAdvisory(originCity: string, destinationCity: string, departureDate: string, returnDate: string) {
+  try {
+    const flights = await fetchFlights(originCity, destinationCity, departureDate, returnDate, false)
+    if (flights.length === 0) {
+      return {
+        routeMode: 'nearby_hub' as const,
+        routeNote: `No bookable route was found from ${originCity}. You may need to land in another city first and continue from there.`,
+      }
+    }
+
+    const direct = flights.find((flight) => flight.stops === 0)
+    if (direct) {
+      return {
+        routeMode: 'direct' as const,
+        routeNote: `Direct flights appear to be available from ${originCity}.`,
+      }
+    }
+
+    const minStops = Math.min(...flights.map((flight) => flight.stops))
+    return {
+      routeMode: 'connecting' as const,
+      routeNote: `No direct flight from ${originCity}. Expect at least ${minStops} stop${minStops > 1 ? 's' : ''} on the way to ${destinationCity}.`,
+    }
+  } catch {
+    return {
+      routeMode: 'unknown' as const,
+      routeNote: `We couldn't verify live flight access for this route right now.`,
+    }
+  }
+}
+
 async function buildRecommendations(params: DiscoverParams, ignoreRegion = false): Promise<{
   recommendations: DiscoverRecommendation[]
   window: ResolvedWindow
@@ -394,6 +426,8 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
         estimatedFlight: candidate.flightCost,
         estimatedTotalPerPerson: candidate.totalPerPerson,
         visaType: candidate.visaType,
+        routeMode: 'unknown' as DiscoverRecommendation['routeMode'],
+        routeNote: 'Checking flight access for this route.',
         tags: candidate.profile.tags.slice(0, 4),
         reasons: buildReasons({
           city: origin.name,
@@ -413,11 +447,25 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
     })
   )
 
+  const topRecommendations = recommendations
+    .filter((recommendation): recommendation is NonNullable<typeof recommendation> => recommendation !== null)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 8)
+
+  const withRouteInfo = await Promise.all(
+    topRecommendations.map(async (recommendation) => ({
+      ...recommendation,
+      ...(await buildRouteAdvisory(
+        params.origin,
+        recommendation.city,
+        recommendation.departureDate,
+        recommendation.returnDate
+      )),
+    }))
+  )
+
   return {
-    recommendations: recommendations
-      .filter((recommendation): recommendation is DiscoverRecommendation => recommendation !== null)
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, 8),
+    recommendations: withRouteInfo,
     window,
   }
 }

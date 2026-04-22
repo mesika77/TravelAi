@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CloudSun, MapPinned, ShieldCheck, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CloudSun, MapPinned, Plane, ShieldCheck, Wallet } from 'lucide-react'
 import DestinationPhoto from '@/components/DestinationPhoto'
 import { decodeDiscoverId, encodeTripId } from '@/lib/encode'
 import { recommendDestinations } from '@/lib/discover'
@@ -89,6 +89,11 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
           {usedRegionFallback && (
             <div className="discover-banner">
               No direct matches for “{search.regionQuery}”, so these are the closest overall fits from {search.origin}.
+            </div>
+          )}
+          {search.regionQuery && !usedRegionFallback && (
+            <div className="discover-banner">
+              Showing cities in or around “{search.regionQuery}” that fit your passport and route constraints best.
             </div>
           )}
           {hadSearchError && (
@@ -193,6 +198,19 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
                       <div className="mono mute">Best for</div>
                       <strong>{recommendation.tags.slice(0, 2).join(' · ')}</strong>
                       <span>{window.summary}</span>
+                    </div>
+                  </div>
+                  <div className="discover-metric discover-metric-wide">
+                    <Plane size={16} />
+                    <div>
+                      <div className="mono mute">Flight access</div>
+                      <strong>
+                        {recommendation.routeMode === 'direct' ? 'Direct route' :
+                          recommendation.routeMode === 'connecting' ? 'Connection required' :
+                            recommendation.routeMode === 'nearby_hub' ? 'Likely via another city' :
+                              'Route not verified'}
+                      </strong>
+                      <span>{recommendation.routeNote}</span>
                     </div>
                   </div>
                 </div>

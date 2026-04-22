@@ -104,6 +104,8 @@ export interface DiscoverRecommendation {
   estimatedFlight: number
   estimatedTotalPerPerson: number
   visaType: VisaType
+  routeMode: 'direct' | 'connecting' | 'nearby_hub' | 'unknown'
+  routeNote: string
   tags: string[]
   reasons: string[]
   departureDate: string

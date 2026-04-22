@@ -16,6 +16,17 @@ const PASSPORT_NAMES: Record<string, string> = {
 
 type CityEntry = { name: string; country: string; countryCode: string }
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  UAE: 'United Arab Emirates',
+  'U.A.E.': 'United Arab Emirates',
+  UK: 'United Kingdom',
+  USA: 'United States',
+}
+
+const COUNTRY_CODE_TO_NAME = Object.fromEntries(
+  Object.entries(PASSPORT_NAMES).map(([code, name]) => [code.toUpperCase(), name])
+)
+
 function cityLookup(city: string): CityEntry | undefined {
   return (citiesData as CityEntry[]).find(
     (c) => c.name.toLowerCase() === city.toLowerCase()
@@ -34,6 +45,12 @@ function mapVisaType(raw: string): VisaType {
   return 'visa_required'
 }
 
+function normalizeCountryName(value: string): string {
+  const trimmed = value.trim()
+  const upper = trimmed.toUpperCase()
+  return COUNTRY_ALIASES[trimmed] ?? COUNTRY_ALIASES[upper] ?? COUNTRY_CODE_TO_NAME[upper] ?? trimmed
+}
+
 function csvFallback(passportName: string, destinationName: string): VisaResult {
   try {
     const csvPath = path.join(process.cwd(), 'public', 'data', 'passport-index.csv')
@@ -42,28 +59,34 @@ function csvFallback(passportName: string, destinationName: string): VisaResult 
       header: true,
       skipEmptyLines: true,
     })
+    const normalizedPassport = normalizeCountryName(passportName).toUpperCase()
+    const normalizedDestination = normalizeCountryName(destinationName).toUpperCase()
     const row = data.find(
       (r) =>
-        r.Passport?.toUpperCase() === passportName.toUpperCase() &&
-        r.Destination?.toUpperCase() === destinationName.toUpperCase()
+        normalizeCountryName(r.Passport ?? '').toUpperCase() === normalizedPassport &&
+        normalizeCountryName(r.Destination ?? '').toUpperCase() === normalizedDestination
     )
     if (row) {
       return {
         type: mapVisaType(row.Value ?? ''),
-        passportCountry: passportName,
-        destinationCountry: destinationName,
+        passportCountry: normalizeCountryName(passportName),
+        destinationCountry: normalizeCountryName(destinationName),
       }
     }
   } catch {
     // fallback failed silently
   }
-  return { type: 'unknown', passportCountry: passportName, destinationCountry: destinationName }
+  return {
+    type: 'unknown',
+    passportCountry: normalizeCountryName(passportName),
+    destinationCountry: normalizeCountryName(destinationName),
+  }
 }
 
 export function checkVisaOffline(passport: string, destinationCountry: string): VisaResult {
   const passportCode = passport.toUpperCase()
   const passportName = PASSPORT_NAMES[passportCode] ?? passport
-  return csvFallback(passportName, destinationCountry)
+  return csvFallback(passportName, normalizeCountryName(destinationCountry))
 }
 
 export async function checkVisa(passport: string, destination: string): Promise<VisaResult> {

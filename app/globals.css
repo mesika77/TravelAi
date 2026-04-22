@@ -454,6 +454,7 @@ em { font-style: italic; }
   padding: 14px 16px; border-radius: var(--r);
   background: var(--paper-2); border: 1px solid var(--line-soft);
 }
+.discover-metric-wide { grid-column: 1 / -1; }
 .discover-metric svg { color: var(--accent); margin-top: 3px; }
 .discover-metric strong { display: block; font-size: 18px; font-weight: 600; }
 .discover-metric span { display: block; color: var(--ink-3); font-size: 13px; margin-top: 4px; }
