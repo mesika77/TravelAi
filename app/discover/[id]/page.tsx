@@ -27,16 +27,31 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
   const search = decodeDiscoverId(id)
   if (!search) notFound()
 
-  let recommendations
-  let window
+  let recommendations: Awaited<ReturnType<typeof recommendDestinations>>['recommendations'] = []
+  let window: Awaited<ReturnType<typeof recommendDestinations>>['window'] | null = null
   let usedRegionFallback = false
+  let hadSearchError = false
   try {
     const result = await recommendDestinations(search)
     recommendations = result.recommendations
     window = result.window
     usedRegionFallback = result.usedRegionFallback ?? false
   } catch {
-    notFound()
+    hadSearchError = true
+  }
+
+  if (!window) {
+    const month = search.flexibleMonths?.[0] ?? new Date().getMonth() + 1
+    const summary = search.departureDate && search.returnDate
+      ? `${new Date(search.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${new Date(search.returnDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      : `${new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', { month: 'long' })} · ${search.tripLengthNights} nights`
+    window = {
+      departureDate: search.departureDate ?? '',
+      returnDate: search.returnDate ?? '',
+      nights: search.tripLengthNights,
+      month,
+      summary,
+    }
   }
 
   return (
@@ -74,6 +89,11 @@ export default async function DiscoverPage({ params }: { params: Promise<{ id: s
           {usedRegionFallback && (
             <div className="discover-banner">
               No direct matches for “{search.regionQuery}”, so these are the closest overall fits from {search.origin}.
+            </div>
+          )}
+          {hadSearchError && (
+            <div className="discover-banner">
+              Some live matching data failed to load, so the results below may be incomplete.
             </div>
           )}
           <div className="trip-chips">

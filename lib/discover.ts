@@ -351,7 +351,7 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
 
   const recommendations = await Promise.all(
     prelim.map(async (candidate) => {
-      const scoredWindows = await Promise.all(candidateWindows.map(async (candidateWindow) => {
+      const scoredWindows = await Promise.allSettled(candidateWindows.map(async (candidateWindow) => {
         const weather = await fetchWeather(
           candidate.city.lat,
           candidate.city.lon,
@@ -370,7 +370,15 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
         return { candidateWindow, weather, totalScore }
       }))
 
-      const bestWindow = scoredWindows.sort((a, b) => b.totalScore - a.totalScore)[0]
+      const successfulWindows = scoredWindows
+        .filter((result): result is PromiseFulfilledResult<{ candidateWindow: ResolvedWindow; weather: Awaited<ReturnType<typeof fetchWeather>>; totalScore: number }> => result.status === 'fulfilled')
+        .map((result) => result.value)
+
+      if (successfulWindows.length === 0) {
+        return null
+      }
+
+      const bestWindow = successfulWindows.sort((a, b) => b.totalScore - a.totalScore)[0]
 
       return {
         city: candidate.city.name,
@@ -407,6 +415,7 @@ async function buildRecommendations(params: DiscoverParams, ignoreRegion = false
 
   return {
     recommendations: recommendations
+      .filter((recommendation): recommendation is DiscoverRecommendation => recommendation !== null)
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 8),
     window,
