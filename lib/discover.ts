@@ -109,7 +109,39 @@ function haversineKm(a: CityData, b: CityData) {
   return R * 2 * Math.atan2(Math.sqrt(q), Math.sqrt(1 - q))
 }
 
-function resolveWindow(params: DiscoverParams) {
+type ResolvedWindow = {
+  departureDate: string
+  returnDate: string
+  nights: number
+  month: number
+  summary: string
+}
+
+function resolveUpcomingMonthYear(month: number) {
+  const now = new Date()
+  const currentMonth = now.getMonth() + 1
+  const year = month < currentMonth ? now.getFullYear() + 1 : now.getFullYear()
+  return { year, month }
+}
+
+function buildFlexibleWindow(month: number, nights: number): ResolvedWindow {
+  const { year } = resolveUpcomingMonthYear(month)
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const lastSafeStart = Math.max(2, daysInMonth - nights - 1)
+  const startDay = Math.min(10, lastSafeStart)
+  const departure = new Date(Date.UTC(year, month - 1, startDay, 12))
+  const returning = new Date(departure)
+  returning.setUTCDate(returning.getUTCDate() + nights)
+  return {
+    departureDate: toDateString(departure),
+    returnDate: toDateString(returning),
+    nights,
+    month,
+    summary: `${monthName(month)} · ${nights} nights`,
+  }
+}
+
+function resolveWindow(params: DiscoverParams): ResolvedWindow {
   if (params.departureDate && params.returnDate) {
     return {
       departureDate: params.departureDate,
@@ -120,24 +152,9 @@ function resolveWindow(params: DiscoverParams) {
     }
   }
 
-  const flexibleMonth = params.flexibleMonth ?? `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
-  const [yearRaw, monthRaw] = flexibleMonth.split('-')
-  const year = Number(yearRaw)
-  const month = Number(monthRaw)
   const nights = Math.max(2, params.tripLengthNights)
-  const daysInMonth = new Date(year, month, 0).getDate()
-  const lastSafeStart = Math.max(2, daysInMonth - nights - 1)
-  const startDay = Math.min(10, lastSafeStart)
-  const departure = new Date(`${flexibleMonth}-${String(startDay).padStart(2, '0')}T12:00:00Z`)
-  const returning = new Date(departure)
-  returning.setUTCDate(returning.getUTCDate() + nights)
-  return {
-    departureDate: toDateString(departure),
-    returnDate: toDateString(returning),
-    nights,
-    month,
-    summary: `${monthName(month)} · ${nights} nights`,
-  }
+  const month = params.flexibleMonths?.[0] ?? new Date().getMonth() + 1
+  return buildFlexibleWindow(month, nights)
 }
 
 function seasonScore(idealMonths: number[], month: number) {
@@ -247,7 +264,7 @@ function buildReasons(input: {
 
 export async function recommendDestinations(params: DiscoverParams): Promise<{
   recommendations: DiscoverRecommendation[]
-  window: ReturnType<typeof resolveWindow>
+  window: ResolvedWindow
 }> {
   const origin = getCity(params.origin)
   if (!origin) {
@@ -255,6 +272,11 @@ export async function recommendDestinations(params: DiscoverParams): Promise<{
   }
 
   const window = resolveWindow(params)
+  const candidateWindows = params.departureDate && params.returnDate
+    ? [window]
+    : (params.flexibleMonths?.length ? params.flexibleMonths : [window.month]).map((month) =>
+        buildFlexibleWindow(month, Math.max(2, params.tripLengthNights))
+      )
   const travelers = Math.max(1, params.adults + params.children)
 
   const prelim = Object.entries(PROFILES)
@@ -290,32 +312,38 @@ export async function recommendDestinations(params: DiscoverParams): Promise<{
 
   const recommendations = await Promise.all(
     prelim.map(async (candidate) => {
-      const weather = await fetchWeather(
-        candidate.city.lat,
-        candidate.city.lon,
-        window.departureDate,
-        window.returnDate
-      )
-      const wxScore = weatherScore(params, weather.avgHigh, weather.avgRain, candidate.profile)
-      const totalScore =
-        interestScore(params.interests, candidate.profile.tags) * 0.28 +
-        seasonScore(candidate.profile.idealMonths, window.month) * 0.18 +
-        wxScore * 0.22 +
-        distanceScore(candidate.distanceKm, window.nights) * 0.12 +
-        budgetScore(candidate.totalPerPerson, params.budget) * 0.1 +
-        visaScore(candidate.visaType) * 0.1
+      const scoredWindows = await Promise.all(candidateWindows.map(async (candidateWindow) => {
+        const weather = await fetchWeather(
+          candidate.city.lat,
+          candidate.city.lon,
+          candidateWindow.departureDate,
+          candidateWindow.returnDate
+        )
+        const wxScore = weatherScore(params, weather.avgHigh, weather.avgRain, candidate.profile)
+        const totalScore =
+          interestScore(params.interests, candidate.profile.tags) * 0.28 +
+          seasonScore(candidate.profile.idealMonths, candidateWindow.month) * 0.18 +
+          wxScore * 0.22 +
+          distanceScore(candidate.distanceKm, candidateWindow.nights) * 0.12 +
+          budgetScore(candidate.totalPerPerson, params.budget) * 0.1 +
+          visaScore(candidate.visaType) * 0.1
+
+        return { candidateWindow, weather, totalScore }
+      }))
+
+      const bestWindow = scoredWindows.sort((a, b) => b.totalScore - a.totalScore)[0]
 
       return {
         city: candidate.city.name,
         country: candidate.city.country,
         countryCode: candidate.city.countryCode,
         region: candidate.profile.region,
-        matchScore: Math.round(totalScore * 100),
+        matchScore: Math.round(bestWindow.totalScore * 100),
         distanceKm: Math.round(candidate.distanceKm),
         flightHours: Math.max(2, Math.round(candidate.distanceKm / 760)),
-        avgHigh: weather.avgHigh,
-        avgLow: weather.avgLow,
-        avgRain: weather.avgRain,
+        avgHigh: bestWindow.weather.avgHigh,
+        avgLow: bestWindow.weather.avgLow,
+        avgRain: bestWindow.weather.avgRain,
         estimatedFlight: candidate.flightCost,
         estimatedTotalPerPerson: candidate.totalPerPerson,
         visaType: candidate.visaType,
@@ -326,14 +354,14 @@ export async function recommendDestinations(params: DiscoverParams): Promise<{
           distanceKm: candidate.distanceKm,
           totalPerPerson: candidate.totalPerPerson,
           budget: params.budget,
-          avgHigh: weather.avgHigh,
-          avgRain: weather.avgRain,
+          avgHigh: bestWindow.weather.avgHigh,
+          avgRain: bestWindow.weather.avgRain,
           visaType: candidate.visaType,
           requestedInterests: params.interests,
-          month: window.month,
+          month: bestWindow.candidateWindow.month,
         }),
-        departureDate: window.departureDate,
-        returnDate: window.returnDate,
+        departureDate: bestWindow.candidateWindow.departureDate,
+        returnDate: bestWindow.candidateWindow.returnDate,
       } satisfies DiscoverRecommendation
     })
   )

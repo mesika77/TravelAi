@@ -16,7 +16,7 @@ interface SearchDraft {
   destination: string
   departureDate: string
   returnDate: string
-  flexibleMonth: string
+  flexibleMonths: number[]
   tripLengthNights: number
   adults: number
   children: number
@@ -35,10 +35,15 @@ const citiesWithAirports = (citiesData as { name: string; lat: number; lon: numb
   (c) => airportCities.has(c.name.toLowerCase())
 )
 
-function nextMonthValue() {
+function getUpcomingMonths() {
   const base = new Date()
-  base.setMonth(base.getMonth() + 1)
-  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(base.getFullYear(), base.getMonth() + index, 1)
+    return {
+      value: date.getMonth() + 1,
+      label: date.toLocaleDateString('en-US', { month: 'short' }),
+    }
+  })
 }
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -105,7 +110,7 @@ const COUNTRIES = [
   { code: 'TH', name: 'Thailand' },
 ]
 
-const TRIP_LENGTHS = [3, 4, 5, 7, 10, 14]
+const UPCOMING_MONTHS = getUpcomingMonths()
 
 export default function SearchForm() {
   const router = useRouter()
@@ -120,7 +125,7 @@ export default function SearchForm() {
     destination: '',
     departureDate: '',
     returnDate: '',
-    flexibleMonth: nextMonthValue(),
+    flexibleMonths: [UPCOMING_MONTHS[0]?.value ?? new Date().getMonth() + 1],
     tripLengthNights: 7,
     adults: 2,
     children: 0,
@@ -176,6 +181,14 @@ export default function SearchForm() {
     setField('interests', current.includes(id) ? current.filter((i) => i !== id) : [...current, id])
   }
 
+  const toggleFlexibleMonth = (month: number) => {
+    const current = form.flexibleMonths
+    const next = current.includes(month)
+      ? current.filter((value) => value !== month)
+      : [...current, month]
+    setField('flexibleMonths', next)
+  }
+
   const handleSubmit = () => {
     if (searchMode === 'trip') {
       const params: TripParams = {
@@ -199,9 +212,9 @@ export default function SearchForm() {
       origin: form.origin,
       departureDate: dateMode === 'exact' ? form.departureDate : undefined,
       returnDate: dateMode === 'exact' ? form.returnDate : undefined,
-      flexibleMonth: dateMode === 'flexible' ? form.flexibleMonth : undefined,
+      flexibleMonths: dateMode === 'flexible' ? form.flexibleMonths : undefined,
       tripLengthNights: dateMode === 'flexible'
-        ? form.tripLengthNights
+        ? Math.max(1, form.tripLengthNights)
         : Math.max(1, Math.round((new Date(form.returnDate).getTime() - new Date(form.departureDate).getTime()) / 86400000)),
       adults: form.adults,
       children: form.children,
@@ -218,7 +231,7 @@ export default function SearchForm() {
   const canNextDiscover = form.origin && (
     dateMode === 'exact'
       ? Boolean(form.departureDate && form.returnDate)
-      : Boolean(form.flexibleMonth && form.tripLengthNights > 0)
+      : Boolean(form.flexibleMonths.length > 0 && form.tripLengthNights > 0)
   )
   const canNext0 = searchMode === 'trip' ? canNextTrip : canNextDiscover
   const canNext1 = form.adults > 0 && (searchMode === 'discover' || oneWay || form.budget > 0)
@@ -398,25 +411,35 @@ export default function SearchForm() {
           ) : (
             <div className="sf-grid-2">
               <div className="field">
-                <div className="field-label">Month</div>
-                <input
-                  className="input"
-                  type="month"
-                  value={form.flexibleMonth}
-                  onChange={(e) => setField('flexibleMonth', e.target.value)}
-                />
+                <div className="field-label">Months</div>
+                <div className="chipwrap">
+                  {UPCOMING_MONTHS.map((month) => {
+                    const on = form.flexibleMonths.includes(month.value)
+                    return (
+                      <button
+                        key={`${month.label}-${month.value}`}
+                        type="button"
+                        className={'chip' + (on ? ' on' : '')}
+                        onClick={() => toggleFlexibleMonth(month.value)}
+                      >
+                        {month.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mono mute">Pick one or more upcoming months.</div>
               </div>
               <div className="field">
                 <div className="field-label">Trip length</div>
-                <select
-                  className="select"
-                  value={String(form.tripLengthNights)}
+                <input
+                  className="input tabular"
+                  type="number"
+                  min={1}
+                  value={form.tripLengthNights}
                   onChange={(e) => setField('tripLengthNights', Number(e.target.value))}
-                >
-                  {TRIP_LENGTHS.map((nights) => (
-                    <option key={nights} value={nights}>{nights} nights</option>
-                  ))}
-                </select>
+                  placeholder="7"
+                />
+                <div className="mono mute">Enter however many nights you want.</div>
               </div>
             </div>
           )}

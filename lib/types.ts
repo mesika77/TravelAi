@@ -18,7 +18,7 @@ export interface DiscoverParams {
   origin: string
   departureDate?: string
   returnDate?: string
-  flexibleMonth?: string
+  flexibleMonths?: number[]
   tripLengthNights: number
   adults: number
   children: number
