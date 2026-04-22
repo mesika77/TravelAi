@@ -9,34 +9,50 @@ interface Props {
   query?: string
 }
 
-// Session-level cache so each city only hits /api/photo once per page load
 const resolved = new Map<string, string>()
 
-export default function DestinationPhoto({ city, className = '', style, query = 'travel' }: Props) {
+export default function DestinationPhoto({ city, className = '', style, query = 'travel landscape' }: Props) {
   const cacheKey = `${city}::${query}`
   const [url, setUrl] = useState<string | null>(resolved.get(cacheKey) ?? null)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    if (resolved.has(cacheKey)) return
+    if (resolved.has(cacheKey)) {
+      setUrl(resolved.get(cacheKey)!)
+      return
+    }
+    setUrl(null)
+    setFailed(false)
     fetch(`/api/photo?city=${encodeURIComponent(city)}&query=${encodeURIComponent(query)}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.url) {
           resolved.set(cacheKey, d.url)
           setUrl(d.url)
+        } else {
+          setFailed(true)
         }
       })
       .catch(() => setFailed(true))
   }, [cacheKey, city, query])
 
-  if (failed || (!url && typeof window !== 'undefined')) {
-    return <div className={`photo ${className}`} data-label={city} style={style} />
+  const sharedStyle: React.CSSProperties = {
+    width: '100%',
+    display: 'block',
+    ...style,
+  }
+
+  if (failed) {
+    return <div className={`photo ${className}`} data-label={city} style={sharedStyle} />
   }
 
   if (!url) {
-    // Show shimmer while loading
-    return <div className={`shimmer ${className}`} style={{ borderRadius: 'var(--r-sm)', ...style }} />
+    return (
+      <div
+        className={`shimmer ${className}`}
+        style={{ borderRadius: 'var(--r-sm)', ...sharedStyle }}
+      />
+    )
   }
 
   return (
@@ -46,13 +62,8 @@ export default function DestinationPhoto({ city, className = '', style, query = 
       alt={city}
       className={className}
       loading="lazy"
-      onError={() => { setFailed(true) }}
-      style={{
-        objectFit: 'cover',
-        width: '100%',
-        display: 'block',
-        ...style,
-      }}
+      onError={() => setFailed(true)}
+      style={{ objectFit: 'cover', ...sharedStyle }}
     />
   )
 }

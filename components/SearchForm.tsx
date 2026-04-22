@@ -101,6 +101,18 @@ export default function SearchForm() {
     if (prefill) {
       set('destination', prefill)
       sessionStorage.removeItem('prefill_destination')
+      // Also pre-fill origin from geolocation if not already set
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
+            setDetectedCity(city)
+            setForm((f) => f.origin ? f : { ...f, origin: city })
+          },
+          () => {},
+          { timeout: 6000, maximumAge: 300_000 }
+        )
+      }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

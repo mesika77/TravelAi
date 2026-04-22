@@ -25,8 +25,9 @@ async function fetchPexels(query: string): Promise<string | null> {
 
 export async function GET(req: NextRequest) {
   const city = req.nextUrl.searchParams.get('city') ?? ''
-  const extra = req.nextUrl.searchParams.get('query') ?? 'travel'
-  const query = `${city} ${extra}`
+  const extra = req.nextUrl.searchParams.get('query') ?? `${city} travel`
+  // Use the specific query as-is; city is already embedded in photoQuery strings
+  const query = extra || `${city} travel`
   const cacheKey = query.toLowerCase()
 
   if (cache.has(cacheKey)) {
@@ -40,8 +41,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ url: pexelsUrl })
   }
 
-  // Fallback: loremflickr — free, no key, destination-specific via Flickr public photos
-  const fallback = `https://loremflickr.com/800/600/${encodeURIComponent(city)},travel/all`
+  // Fallback: loremflickr — free, no key, uses specific landmark keywords
+  const flickrTerms = query.split(' ').slice(0, 3).join(',')
+  const fallback = `https://loremflickr.com/800/600/${encodeURIComponent(flickrTerms)}/all`
   cache.set(cacheKey, fallback)
   return NextResponse.json({ url: fallback, fallback: true })
 }
