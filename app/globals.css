@@ -651,8 +651,9 @@ em { font-style: italic; }
 
 /* ========== WEATHER ========== */
 .weather-chart {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
-  margin: 18px 0 10px; height: 120px; align-items: end;
+  margin: 18px 0 10px;
+  height: 164px;
+  padding: 6px 4px 0 0;
 }
 .weather-summary {
   display: flex;
@@ -675,18 +676,33 @@ em { font-style: italic; }
   display: block;
   line-height: 1.5;
 }
-.wx-col { display: flex; flex-direction: column; align-items: center; }
-.wx-bar-wrap { width: 10px; height: 100px; position: relative; display: flex; align-items: flex-end; justify-content: center; }
-.wx-bar-high {
-  position: absolute; bottom: 0; width: 10px;
-  background: var(--accent); border-radius: 5px 5px 0 0;
+.weather-tooltip {
+  min-width: 150px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--paper) 94%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 40px rgba(0,0,0,.1);
 }
-.wx-bar-low {
-  position: absolute; bottom: 0; width: 10px;
-  background: color-mix(in oklch, var(--accent) 25%, var(--paper));
-  border-radius: 5px 5px 0 0;
+.weather-tooltip-day {
+  margin-bottom: 8px;
+  color: var(--ink-4);
 }
-.wx-rain { position: absolute; top: -10px; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); }
+.weather-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.weather-tooltip-row + .weather-tooltip-row { margin-top: 4px; }
+.weather-tooltip-row strong {
+  color: var(--ink);
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 500;
+}
 
 /* ========== CURRENCY ========== */
 .curr-main { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
@@ -836,7 +852,7 @@ em { font-style: italic; }
   .hotel-body { padding: 16px; }
   .act-cat { margin-bottom: 22px; }
   .act-item { align-items: flex-start; }
-  .weather-chart { gap: 6px; height: 100px; }
+  .weather-chart { height: 150px; }
   .weather-summary { align-items: flex-end; }
   .curr-ref { grid-template-columns: 1fr; gap: 6px; }
   .discover-grid { padding: 8px 18px 48px; gap: 18px; }
@@ -941,12 +957,9 @@ em { font-style: italic; }
   }
   .weather-rain-value { font-size: 24px; }
   .weather-chart {
-    gap: 4px;
-    height: 92px;
+    height: 138px;
     margin-top: 14px;
   }
-  .wx-bar-wrap { width: 8px; height: 82px; }
-  .wx-bar-high, .wx-bar-low { width: 8px; }
   .weather-footnote {
     font-size: 9px;
     margin-top: 8px;

@@ -539,7 +539,6 @@ export default function SearchForm() {
 
           <div className="sf-grid-2">
             <div className="field">
-              <div className="field-label">Passport</div>
               <PassportAutocomplete
                 label="Passport"
                 value={form.passport}
