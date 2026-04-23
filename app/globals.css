@@ -879,12 +879,8 @@ em { font-style: italic; }
     box-shadow: 0 26px 70px -34px rgba(0,0,0,.18);
   }
   .ios-iphone .searchform .sf-footer {
-    position: sticky;
-    bottom: 0;
-    margin: 8px -18px -18px;
-    padding: 16px 18px calc(14px + env(safe-area-inset-bottom, 0));
-    background: color-mix(in oklch, var(--paper) 92%, transparent);
-    backdrop-filter: blur(18px);
+    margin-top: 12px;
+    padding-top: 20px;
   }
   .ios-iphone .hero-meta { gap: 14px; }
   .ios-iphone .trip-bar-inner {
@@ -981,11 +977,11 @@ em { font-style: italic; }
     padding-bottom: calc(90px + env(safe-area-inset-bottom, 0));
   }
   .ios-iphone .searchform .sf-footer {
-    margin-left: -14px;
-    margin-right: -14px;
-    margin-bottom: -16px;
-    padding-left: 14px;
-    padding-right: 14px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
