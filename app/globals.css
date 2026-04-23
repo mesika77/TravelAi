@@ -606,6 +606,27 @@ em { font-style: italic; }
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
   margin: 18px 0 10px; height: 120px; align-items: end;
 }
+.weather-summary {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  margin-top: 10px;
+}
+.weather-main-stat { min-width: 0; }
+.weather-main-value { font-size: 40px; line-height: 1; }
+.weather-main-sub { font-size: 20px; color: var(--ink-3); }
+.weather-rain-stat {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.weather-rain-value { font-size: 26px; }
+.weather-footnote {
+  font-size: 10px;
+  font-style: italic;
+  display: block;
+  line-height: 1.5;
+}
 .wx-col { display: flex; flex-direction: column; align-items: center; }
 .wx-bar-wrap { width: 10px; height: 100px; position: relative; display: flex; align-items: flex-end; justify-content: center; }
 .wx-bar-high {
@@ -748,7 +769,7 @@ em { font-style: italic; }
   .what-grid { grid-template-columns: 1fr; }
   .what-cell { min-height: auto; padding: 24px 20px; }
   .dest-grid { grid-template-columns: 1fr; }
-  .trip-title, .discover-title { font-size: clamp(38px, 14vw, 58px); }
+  .trip-title, .discover-title { font-size: clamp(36px, 13vw, 56px); }
   .trip-desc, .discover-desc { font-size: 15px; }
   .trip-grid { padding: 12px 18px 48px; gap: 24px; }
   .trip-main { gap: 42px; }
@@ -767,6 +788,7 @@ em { font-style: italic; }
   .act-cat { margin-bottom: 22px; }
   .act-item { align-items: flex-start; }
   .weather-chart { gap: 6px; height: 100px; }
+  .weather-summary { align-items: flex-end; }
   .curr-ref { grid-template-columns: 1fr; gap: 6px; }
   .discover-grid { padding: 8px 18px 48px; gap: 18px; }
   .discover-card { border-radius: 18px; }
@@ -804,22 +826,50 @@ em { font-style: italic; }
 @media (max-width: 560px) {
   .mono { font-size: 0.72em; }
   .hero { padding-top: 28px; }
+  .hero-title { font-size: clamp(34px, 12vw, 48px); line-height: 0.95; }
+  .hero-sub { font-size: 14px; max-width: 100%; }
   .hero-meta { grid-template-columns: 1fr; gap: 14px; }
   .hero-stamp { position: static; margin-top: 12px; transform: none; max-width: none; }
   .search-section { padding: 56px 0 40px; }
+  .search-section-head h2[style], .what-head h2[style] { font-size: 15vw !important; max-width: 100% !important; line-height: 0.94; }
   .searchform { padding: 18px 14px 16px; }
   .field-label, .eyebrow, .kicker { letter-spacing: 0.12em; }
   .input, .select { font-size: 16px; }
   .chip { padding: 10px 12px; font-size: 12px; }
   .trip-bar { top: 62px; }
   .trip-bar-inner { gap: 10px; }
+  .trip-bar-inner .btn-link { font-size: 9px; }
   .trip-route .serif { font-size: 16px !important; }
-  .trip-meta { font-size: 10px; }
+  .trip-meta { font-size: 10px; width: 100%; }
   .trip-header { padding-top: 30px; }
   .trip-chip { font-size: 9px; }
   .section-title { font-size: 30px; }
   .flight-route { padding: 16px 14px; }
   .flight-row { border-radius: 16px; }
+  .weather-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .weather-main-value { font-size: 34px; }
+  .weather-main-sub { font-size: 18px; }
+  .weather-rain-stat {
+    margin-left: 0;
+    text-align: left;
+  }
+  .weather-rain-value { font-size: 24px; }
+  .weather-chart {
+    gap: 4px;
+    height: 92px;
+    margin-top: 14px;
+  }
+  .wx-bar-wrap { width: 8px; height: 82px; }
+  .wx-bar-high, .wx-bar-low { width: 8px; }
+  .weather-footnote {
+    font-size: 9px;
+    margin-top: 8px;
+    max-width: 220px;
+  }
   .discover-header { padding: 30px 18px 10px; }
   .discover-card-media { min-height: 210px; }
   .discover-rank { top: 12px; left: 12px; }
@@ -829,4 +879,18 @@ em { font-style: italic; }
   .discover-loading-pill { width: 100%; }
   .chat-body { padding: 14px; }
   .chat-bubble { font-size: 13px; }
+}
+
+@media (max-width: 420px) {
+  .wrap, .wrap-narrow { padding: 0 14px; }
+  .nav { padding: 0 14px; }
+  .nav-brand { gap: 10px; font-size: 18px; }
+  .nav-brand-mark { width: 26px; height: 26px; font-size: 13px; }
+  .search-section-head h2[style], .what-head h2[style] { font-size: 13.5vw !important; }
+  .trip-route { row-gap: 4px; }
+  .trip-route .serif { font-size: 15px !important; }
+  .trip-meta { gap: 8px; }
+  .flight-price .serif { font-size: 22px !important; }
+  .curr-main .serif:first-of-type { font-size: 28px !important; }
+  .curr-main .serif:last-of-type { font-size: 20px !important; }
 }

@@ -34,7 +34,11 @@ export default function WeatherWidget() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void (async () => {
+      await load()
+    })()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const forecast = weather?.forecast ?? []
   const step = Math.max(1, Math.floor(forecast.length / 7))
@@ -71,16 +75,16 @@ export default function WeatherWidget() {
 
       {weather && !loading && (
         <>
-          <div style={{ display: 'flex', gap: 18, alignItems: 'baseline', marginTop: 10 }}>
-            <div>
-              <div className="serif tabular" style={{ fontSize: 40, lineHeight: 1 }}>
+          <div className="weather-summary">
+            <div className="weather-main-stat">
+              <div className="serif tabular weather-main-value">
                 {weather.avgHigh}°
-                <span style={{ fontSize: 20, color: 'var(--ink-3)' }}>/{weather.avgLow}°</span>
+                <span className="weather-main-sub">/{weather.avgLow}°</span>
               </div>
               <div className="mono mute">Avg high/low · °C</div>
             </div>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-              <div className="serif tabular" style={{ fontSize: 26 }}>{rainyPct}%</div>
+            <div className="weather-rain-stat">
+              <div className="serif tabular weather-rain-value">{rainyPct}%</div>
               <div className="mono mute">Rainy days</div>
             </div>
           </div>
@@ -103,7 +107,7 @@ export default function WeatherWidget() {
             })}
           </div>
 
-          <div className="mono mute" style={{ fontSize: 10, fontStyle: 'italic' }}>
+          <div className="weather-footnote mono mute">
             Historical · same period, prior year · Open-Meteo
           </div>
         </>
