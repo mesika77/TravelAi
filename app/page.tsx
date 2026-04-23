@@ -1,6 +1,8 @@
 import SearchForm from '@/components/SearchForm'
 import DestinationsStrip from '@/components/DestinationsStrip'
 import DestinationPhoto from '@/components/DestinationPhoto'
+import IPhoneAppRail from '@/components/IPhoneAppRail'
+import Link from 'next/link'
 import {
   Plane, Shield, Building2, Cloud, Compass, Coins, Sparkles,
 } from 'lucide-react'
@@ -35,6 +37,7 @@ export default function HomePage() {
               AI concierge who&apos;s read every guidebook — composed into a single
               shareable page.
             </p>
+            <IPhoneAppRail />
             <div className="hero-meta">
               <div className="hero-meta-item">
                 <div className="mono mute">Powered by</div>
@@ -126,7 +129,7 @@ export default function HomePage() {
           <div className="foot-cols">
             <div>
               <div className="mono mute" style={{ marginBottom: 10 }}>Product</div>
-              <a href="/">Plan a trip</a>
+              <Link href="/">Plan a trip</Link>
               <a href="#search-section">Search</a>
               <a href="#concierge">Concierge</a>
             </div>

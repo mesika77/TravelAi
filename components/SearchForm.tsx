@@ -238,7 +238,7 @@ export default function SearchForm() {
   const canSubmit = canNext1 && Boolean(form.passport) && form.interests.length > 0
 
   return (
-    <div className="searchform">
+    <div className="searchform planner-surface">
       <div className="sf-head">
         <div className="sf-dots">
           {[0, 1, 2].map((i) => (

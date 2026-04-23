@@ -68,6 +68,10 @@ html, body {
   -webkit-text-size-adjust: 100%;
 }
 body { overflow-x: hidden; transition: background .35s, color .35s; }
+body.ios-iphone {
+  min-height: 100dvh;
+  overscroll-behavior-y: contain;
+}
 h1, h2, h3, h4, .serif {
   font-family: var(--f-display);
   font-weight: 400;
@@ -267,6 +271,31 @@ em { font-style: italic; }
 .hero-meta-item { display: flex; flex-direction: column; gap: 4px; }
 .hero-right { position: relative; }
 .hero-photo { width: 100%; aspect-ratio: 4/5; border-radius: var(--r-lg); }
+.iphone-app-rail {
+  display: none;
+  margin-top: 24px;
+  padding: 18px 18px 16px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, color-mix(in oklch, var(--accent) 7%, var(--paper)) 0%, var(--paper) 100%);
+  box-shadow: 0 24px 60px -40px rgba(0,0,0,.16);
+}
+.iphone-app-rail.standalone {
+  background:
+    linear-gradient(135deg, color-mix(in oklch, var(--go) 8%, var(--paper)) 0%, var(--paper) 100%);
+}
+.iphone-app-rail-title { font-size: 28px; margin-top: 8px; }
+.iphone-app-rail-copy { max-width: 520px; margin-top: 10px; color: var(--ink-3); font-size: 14px; }
+.iphone-app-rail-actions {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 18px;
+}
+.iphone-app-rail-hint {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-3); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.12em; font-family: var(--f-mono);
+}
 .hero-stamp {
   position: absolute; bottom: -20px; left: -20px;
   background: var(--paper); border: 1px solid var(--line);
@@ -292,6 +321,7 @@ em { font-style: italic; }
   border-radius: var(--r-lg); padding: 36px 40px;
   box-shadow: 0 30px 80px -30px rgba(0,0,0,.12);
 }
+.planner-surface { scroll-margin-top: 120px; }
 .sf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
 .sf-dots { display: flex; gap: 6px; }
 .sf-dot { height: 6px; border-radius: 3px; transition: all .3s; }
@@ -485,6 +515,24 @@ em { font-style: italic; }
 .discover-actions {
   display: flex; justify-content: space-between; align-items: center; gap: 20px;
   padding-top: 16px; border-top: 1px solid var(--line-soft);
+}
+
+.ios-iphone .nav {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
+.ios-standalone .nav {
+  height: calc(68px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+
+.ios-standalone .trip-bar {
+  top: calc(68px + env(safe-area-inset-top));
+}
+
+.ios-iphone .trip-bar-inner,
+.ios-iphone .foot-bottom {
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
 }
 
 /* ========== SECTIONS ========== */
@@ -753,6 +801,7 @@ em { font-style: italic; }
   .hero-photo { aspect-ratio: 5 / 6; }
   .hero-stamp { padding: 10px 12px; max-width: 170px; }
   .hero-marquee { margin-top: 30px; padding: 10px 0; font-size: 10px; }
+  .iphone-app-rail { display: block; }
   .search-section-head { margin-bottom: 28px; gap: 16px; }
   .searchform { padding: 22px 18px 18px; border-radius: 18px; }
   .sf-head { margin-bottom: 22px; }
@@ -821,6 +870,28 @@ em { font-style: italic; }
   }
   .chat-header { padding-top: calc(16px + env(safe-area-inset-top, 0)); }
   .chat-input-row { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0)); }
+
+  .ios-iphone .search-section { padding-top: 40px; }
+  .ios-iphone .search-section-head { margin-bottom: 20px; }
+  .ios-iphone .search-section-head .mono.mute { max-width: 100% !important; }
+  .ios-iphone .planner-surface {
+    border-radius: 24px;
+    box-shadow: 0 26px 70px -34px rgba(0,0,0,.18);
+  }
+  .ios-iphone .searchform .sf-footer {
+    position: sticky;
+    bottom: 0;
+    margin: 8px -18px -18px;
+    padding: 16px 18px calc(14px + env(safe-area-inset-bottom, 0));
+    background: color-mix(in oklch, var(--paper) 92%, transparent);
+    backdrop-filter: blur(18px);
+  }
+  .ios-iphone .hero-meta { gap: 14px; }
+  .ios-iphone .trip-bar-inner {
+    min-height: 64px;
+    height: auto;
+    padding-top: 10px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -830,6 +901,14 @@ em { font-style: italic; }
   .hero-sub { font-size: 14px; max-width: 100%; }
   .hero-meta { grid-template-columns: 1fr; gap: 14px; }
   .hero-stamp { position: static; margin-top: 12px; transform: none; max-width: none; }
+  .iphone-app-rail { padding: 16px 16px 14px; }
+  .iphone-app-rail-title { font-size: 24px; }
+  .iphone-app-rail-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .iphone-app-rail-actions .btn { width: 100%; }
+  .iphone-app-rail-hint { justify-content: center; }
   .search-section { padding: 56px 0 40px; }
   .search-section-head h2[style], .what-head h2[style] {
     font-size: clamp(40px, 11.8vw, 48px) !important;
@@ -886,6 +965,28 @@ em { font-style: italic; }
   .discover-loading-pill { width: 100%; }
   .chat-body { padding: 14px; }
   .chat-bubble { font-size: 13px; }
+
+  .ios-iphone .nav {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .ios-iphone .trip-bar { top: 62px; }
+  .ios-standalone .trip-bar { top: calc(62px + env(safe-area-inset-top)); }
+  .ios-iphone .trip-header,
+  .ios-iphone .discover-header {
+    padding-top: 38px;
+  }
+  .ios-iphone .trip-grid,
+  .ios-iphone .discover-grid {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0));
+  }
+  .ios-iphone .searchform .sf-footer {
+    margin-left: -14px;
+    margin-right: -14px;
+    margin-bottom: -16px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
 }
 
 @media (max-width: 420px) {

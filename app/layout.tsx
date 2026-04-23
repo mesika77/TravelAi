@@ -1,9 +1,8 @@
-'use client'
-
+import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google'
-import { useEffect, useState } from 'react'
-import { Moon, Sun, Sparkles } from 'lucide-react'
-import Link from 'next/link'
+import Nav from '@/components/Nav'
+import ClientRuntime from '@/components/ClientRuntime'
 import './globals.css'
 
 const fraunces = Fraunces({
@@ -25,58 +24,59 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ['400', '500'],
 })
 
-function Nav() {
-  const [dark, setDark] = useState(false)
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
-
-  const toggle = () => {
-    const html = document.documentElement
-    html.classList.toggle('dark')
-    const isDark = html.classList.contains('dark')
-    setDark(isDark)
-    localStorage.setItem('theme', isDark ? 'dark' : 'light')
-  }
-
-  return (
-    <header className="nav">
-      <Link href="/" className="nav-brand">
-        <div className="nav-brand-mark">T</div>
-        Travel<em style={{ color: 'var(--accent)' }}>AI</em>
-      </Link>
-      <div className="nav-right">
-        <Link href="/" className="nav-link" style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Plan</Link>
-        <button
-          onClick={toggle}
-          className="icon-btn"
-          aria-label="Toggle dark mode"
-        >
-          {dark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
-        </button>
-      </div>
-    </header>
-  )
+export const metadata: Metadata = {
+  metadataBase: new URL('https://travelai.up.railway.app'),
+  title: 'TravelAI — Plan your perfect trip',
+  description: 'AI-powered travel planning with real-time flights, visa checks, hotels, weather, and a personal travel concierge.',
+  applicationName: 'TravelAI',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'TravelAI',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const saved = localStorage.getItem('theme')
-    if (saved === 'dark') document.documentElement.classList.add('dark')
-  }, [])
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf7f1' },
+    { media: '(prefers-color-scheme: dark)', color: '#17150f' },
+  ],
+}
 
+const themeBootstrap = `
+  try {
+    var saved = localStorage.getItem('theme');
+    if (saved === 'dark') document.documentElement.classList.add('dark');
+  } catch (error) {}
+`
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <title>TravelAI — Plan your perfect trip</title>
-        <meta name="description" content="AI-powered travel planning with real-time flights, visa checks, hotels, weather, and a personal travel concierge." />
-      </head>
       <body className="min-h-screen flex flex-col">
+        <Script id="theme-bootstrap" strategy="beforeInteractive">
+          {themeBootstrap}
+        </Script>
+        <ClientRuntime />
         <Nav />
         <main className="flex-1">{children}</main>
       </body>

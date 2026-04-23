@@ -24,15 +24,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     ? 0
     : Math.max(1, Math.round((returnDate.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
 
-  const fmtShort = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const fmtBar = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   const totalTravelers = tripParams.adults + tripParams.children
   const dest = tripParams.destination
-  const tripLabel = tripParams.oneWay
-    ? `One way to ${dest}`
-    : `${nights} night${nights !== 1 ? 's' : ''} in ${dest}`
-
   const interests = tripParams.interests.map((i) => i.charAt(0).toUpperCase() + i.slice(1))
 
   return (
