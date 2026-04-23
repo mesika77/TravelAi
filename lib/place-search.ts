@@ -76,25 +76,28 @@ function scoreSuggestion(item: PlaceSuggestion, query: string) {
   const kindBoost = item.kind === 'metro' ? 120 : item.kind === 'airport' ? 50 : 30
 
   let score = item.rank ?? 0
+  let matched = false
 
-  if (city === q) score += 500
-  else if (city.startsWith(q)) score += 260
-  else if (city.includes(q)) score += 150
+  if (city === q) { score += 500; matched = true }
+  else if (city.startsWith(q)) { score += 260; matched = true }
+  else if (city.includes(q)) { score += 150; matched = true }
 
-  if (country === q) score += 230
-  else if (country.startsWith(q)) score += 140
-  else if (country.includes(q)) score += 90
+  if (country === q) { score += 230; matched = true }
+  else if (country.startsWith(q)) { score += 140; matched = true }
+  else if (country.includes(q)) { score += 90; matched = true }
 
   if (iata) {
-    if (iata === q) score += 420
-    else if (iata.startsWith(q)) score += 210
+    if (iata === q) { score += 420; matched = true }
+    else if (iata.startsWith(q)) { score += 210; matched = true }
   }
 
   if (airportName) {
-    if (airportName === q) score += 230
-    else if (airportName.startsWith(q)) score += 130
-    else if (airportName.includes(q)) score += 80
+    if (airportName === q) { score += 230; matched = true }
+    else if (airportName.startsWith(q)) { score += 130; matched = true }
+    else if (airportName.includes(q)) { score += 80; matched = true }
   }
+
+  if (!matched) return Number.NEGATIVE_INFINITY
 
   score += kindBoost
 
@@ -106,9 +109,11 @@ function scoreSuggestion(item: PlaceSuggestion, query: string) {
 }
 
 function suggestionKey(item: PlaceSuggestion) {
-  return [item.city, item.countryCode ?? item.country, item.iata ?? '', item.airportName ?? '', item.kind]
-    .map((value) => value.toLowerCase())
-    .join('::')
+  const countryKey = (item.countryCode ?? item.country).toLowerCase()
+  if (item.iata) {
+    return ['airport', countryKey, item.iata.toLowerCase()].join('::')
+  }
+  return ['city', item.city.toLowerCase(), countryKey].join('::')
 }
 
 export function dedupePlaceSuggestions(items: PlaceSuggestion[]) {
@@ -116,7 +121,12 @@ export function dedupePlaceSuggestions(items: PlaceSuggestion[]) {
   for (const item of items) {
     const key = suggestionKey(item)
     const current = seen.get(key)
-    if (!current || (item.rank ?? 0) > (current.rank ?? 0)) {
+    const currentRank = current?.rank ?? 0
+    const itemRank = item.rank ?? 0
+    const currentNameLength = current?.airportName?.length ?? 0
+    const itemNameLength = item.airportName?.length ?? 0
+
+    if (!current || itemRank > currentRank || (itemRank === currentRank && itemNameLength > currentNameLength)) {
       seen.set(key, item)
     }
   }
@@ -127,7 +137,7 @@ export function searchPlaceSuggestions(items: PlaceSuggestion[], query: string, 
   const q = normalizeText(query)
   if (!q) return []
 
-  return dedupePlaceSuggestions(
+  const ranked = dedupePlaceSuggestions(
     items
       .map((item) => ({ item, score: scoreSuggestion(item, q) }))
       .filter(({ score }) => score > 0)
@@ -135,9 +145,22 @@ export function searchPlaceSuggestions(items: PlaceSuggestion[], query: string, 
         if (b.score !== a.score) return b.score - a.score
         return a.item.city.localeCompare(b.item.city)
       })
-      .slice(0, limit)
       .map(({ item }) => item)
   )
+
+  const airportOrMetroByCity = new Set(
+    ranked
+      .filter((item) => item.kind !== 'city')
+      .map((item) => `${item.city.toLowerCase()}::${(item.countryCode ?? item.country).toLowerCase()}`)
+  )
+
+  return ranked
+    .filter((item) => {
+      if (item.kind !== 'city') return true
+      const cityKey = `${item.city.toLowerCase()}::${(item.countryCode ?? item.country).toLowerCase()}`
+      return !airportOrMetroByCity.has(cityKey)
+    })
+    .slice(0, limit)
 }
 
 export function lookupLocalPlaceByCity(cityName: string) {
