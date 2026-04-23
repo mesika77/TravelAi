@@ -7,17 +7,48 @@ import airportsData from '@/public/data/airports.json'
 interface Suggestion {
   city: string
   country: string
+  countryCode?: string
   iata?: string
+  airportName?: string
+  kind: 'city' | 'airport'
+  searchTerms: string[]
 }
 
-const iataMap = new Map<string, string>()
-for (const a of airportsData as { city: string; iata: string }[]) {
-  iataMap.set(a.city.toLowerCase(), a.iata)
+const countryNameByCode = new Map<string, string>()
+for (const city of citiesData as { country: string; countryCode: string }[]) {
+  countryNameByCode.set(city.countryCode.toUpperCase(), city.country)
 }
 
-const ALL: Suggestion[] = (citiesData as { name: string; country: string }[])
-  .map((c) => ({ city: c.name, country: c.country, iata: iataMap.get(c.name.toLowerCase()) }))
-  .filter((c) => c.iata !== undefined) as Suggestion[]
+const citySuggestions = new Map<string, Suggestion>()
+for (const city of citiesData as { name: string; country: string; countryCode: string }[]) {
+  citySuggestions.set(`${city.name.toLowerCase()}-${city.countryCode.toLowerCase()}`, {
+    city: city.name,
+    country: city.country,
+    countryCode: city.countryCode,
+    kind: 'city',
+    searchTerms: [city.name, city.country, city.countryCode].map((value) => value.toLowerCase()),
+  })
+}
+
+const airportSuggestions: Suggestion[] = (airportsData as { city: string; country: string; iata: string; name: string }[])
+  .map((airport) => {
+    const country = countryNameByCode.get(airport.country.toUpperCase()) ?? airport.country
+    const searchTerms = [airport.city, country, airport.iata, airport.name]
+      .filter(Boolean)
+      .map((value) => value.toLowerCase())
+
+    return {
+      city: airport.city,
+      country,
+      countryCode: airport.country,
+      iata: airport.iata,
+      airportName: airport.name,
+      kind: 'airport' as const,
+      searchTerms,
+    }
+  })
+
+const ALL: Suggestion[] = [...citySuggestions.values(), ...airportSuggestions]
 
 interface Props {
   value: string
@@ -33,10 +64,16 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
   const ref = useRef<HTMLDivElement>(null)
 
   const filtered = query.length >= 1
-    ? ALL.filter((s) => {
+    ? ALL.filter((s) => s.searchTerms.some((term) => term.includes(query.toLowerCase())))
+      .sort((a, b) => {
         const q = query.toLowerCase()
-        return s.city.toLowerCase().includes(q) || s.country.toLowerCase().includes(q)
-      }).slice(0, 8)
+        const aStarts = a.searchTerms.some((term) => term.startsWith(q))
+        const bStarts = b.searchTerms.some((term) => term.startsWith(q))
+        if (aStarts !== bStarts) return aStarts ? -1 : 1
+        if (a.kind !== b.kind) return a.kind === 'city' ? -1 : 1
+        return a.city.localeCompare(b.city)
+      })
+      .slice(0, 8)
     : []
 
   useEffect(() => { setQuery(value) }, [value])
@@ -98,7 +135,14 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
                 borderBottom: '1px solid var(--line-soft)',
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{s.city}</span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{s.city}</span>
+                {s.airportName && (
+                  <span style={{ color: 'var(--ink-4)', fontSize: 11 }}>
+                    {s.airportName}
+                  </span>
+                )}
+              </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-4)', fontSize: 11 }}>
                 {s.country}
                 {s.iata && (

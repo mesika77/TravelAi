@@ -1,8 +1,15 @@
 import type { FlightOffer } from './types'
 import airportsData from '@/public/data/airports.json'
 
+const CITY_IATA_OVERRIDES: Record<string, string> = {
+  nicosia: 'LCA',
+}
+
 export function findIataCode(cityName: string): string | null {
   const normalized = cityName.toLowerCase().trim()
+  const override = CITY_IATA_OVERRIDES[normalized]
+  if (override) return override
+
   const match = airportsData.find(
     (a) =>
       a.city.toLowerCase() === normalized ||
