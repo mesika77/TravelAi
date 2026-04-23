@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const currencyCode = findCurrencyCode(city)
+    const currencyCode = await findCurrencyCode(city)
     const result = await fetchCurrency(currencyCode, budget)
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate' },

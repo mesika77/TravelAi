@@ -1,54 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import citiesData from '@/public/data/cities.json'
-import airportsData from '@/public/data/airports.json'
-
-interface Suggestion {
-  city: string
-  country: string
-  countryCode?: string
-  iata?: string
-  airportName?: string
-  kind: 'city' | 'airport'
-  searchTerms: string[]
-}
-
-const countryNameByCode = new Map<string, string>()
-for (const city of citiesData as { country: string; countryCode: string }[]) {
-  countryNameByCode.set(city.countryCode.toUpperCase(), city.country)
-}
-
-const citySuggestions = new Map<string, Suggestion>()
-for (const city of citiesData as { name: string; country: string; countryCode: string }[]) {
-  citySuggestions.set(`${city.name.toLowerCase()}-${city.countryCode.toLowerCase()}`, {
-    city: city.name,
-    country: city.country,
-    countryCode: city.countryCode,
-    kind: 'city',
-    searchTerms: [city.name, city.country, city.countryCode].map((value) => value.toLowerCase()),
-  })
-}
-
-const airportSuggestions: Suggestion[] = (airportsData as { city: string; country: string; iata: string; name: string }[])
-  .map((airport) => {
-    const country = countryNameByCode.get(airport.country.toUpperCase()) ?? airport.country
-    const searchTerms = [airport.city, country, airport.iata, airport.name]
-      .filter(Boolean)
-      .map((value) => value.toLowerCase())
-
-    return {
-      city: airport.city,
-      country,
-      countryCode: airport.country,
-      iata: airport.iata,
-      airportName: airport.name,
-      kind: 'airport' as const,
-      searchTerms,
-    }
-  })
-
-const ALL: Suggestion[] = [...citySuggestions.values(), ...airportSuggestions]
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  LOCAL_PLACE_SUGGESTIONS,
+  dedupePlaceSuggestions,
+  searchPlaceSuggestions,
+  type PlaceSuggestion,
+} from '@/lib/place-search'
 
 interface Props {
   value: string
@@ -61,22 +19,47 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
   const [query, setQuery] = useState(value)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [remoteSuggestions, setRemoteSuggestions] = useState<PlaceSuggestion[]>([])
   const ref = useRef<HTMLDivElement>(null)
 
-  const filtered = query.length >= 1
-    ? ALL.filter((s) => s.searchTerms.some((term) => term.includes(query.toLowerCase())))
-      .sort((a, b) => {
-        const q = query.toLowerCase()
-        const aStarts = a.searchTerms.some((term) => term.startsWith(q))
-        const bStarts = b.searchTerms.some((term) => term.startsWith(q))
-        if (aStarts !== bStarts) return aStarts ? -1 : 1
-        if (a.kind !== b.kind) return a.kind === 'city' ? -1 : 1
-        return a.city.localeCompare(b.city)
-      })
-      .slice(0, 8)
-    : []
+  const filtered = useMemo(
+    () => query.length >= 1
+      ? searchPlaceSuggestions(
+          dedupePlaceSuggestions([...remoteSuggestions, ...LOCAL_PLACE_SUGGESTIONS]),
+          query,
+          8
+        )
+      : [],
+    [query, remoteSuggestions]
+  )
 
   useEffect(() => { setQuery(value) }, [value])
+
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setRemoteSuggestions([])
+      return
+    }
+
+    const controller = new AbortController()
+    const timeout = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places?q=${encodeURIComponent(query)}&limit=8`, {
+          signal: controller.signal,
+        })
+        if (!res.ok) return
+        const json = await res.json() as { suggestions?: PlaceSuggestion[] }
+        setRemoteSuggestions(json.suggestions ?? [])
+      } catch {
+        if (!controller.signal.aborted) setRemoteSuggestions([])
+      }
+    }, 220)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeout)
+    }
+  }, [query])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -86,7 +69,7 @@ export default function CityAutocomplete({ value, onChange, placeholder, label }
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const select = (s: Suggestion) => {
+  const select = (s: PlaceSuggestion) => {
     setQuery(s.city)
     onChange(s.city)
     setOpen(false)

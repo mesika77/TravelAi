@@ -1,5 +1,6 @@
 import type { FlightOffer } from './types'
 import airportsData from '@/public/data/airports.json'
+import { lookupStoredPlaceByCity } from './places'
 
 const CITY_IATA_OVERRIDES: Record<string, string> = {
   nicosia: 'LCA',
@@ -16,6 +17,12 @@ export function findIataCode(cityName: string): string | null {
       a.name.toLowerCase().includes(normalized)
   )
   return match?.iata ?? null
+}
+
+export async function resolveIataCode(cityName: string): Promise<string | null> {
+  const stored = await lookupStoredPlaceByCity(cityName)
+  if (stored?.iata) return stored.iata
+  return findIataCode(cityName)
 }
 
 function parseFlights(arr: unknown[], offset = 0): FlightOffer[] {
@@ -63,8 +70,8 @@ export async function fetchFlights(
   const key = process.env.SERPAPI_KEY
   if (!key) throw new Error('SERPAPI_KEY_MISSING')
 
-  const originIata = findIataCode(origin) ?? origin.toUpperCase().slice(0, 3)
-  const destIata = findIataCode(destination) ?? destination.toUpperCase().slice(0, 3)
+  const originIata = await resolveIataCode(origin) ?? origin.toUpperCase().slice(0, 3)
+  const destIata = await resolveIataCode(destination) ?? destination.toUpperCase().slice(0, 3)
 
   const url = new URL('https://serpapi.com/search')
   url.searchParams.set('engine', 'google_flights')

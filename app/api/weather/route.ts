@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const coords = findCityCoords(city)
+    const coords = await findCityCoords(city)
     if (!coords) {
       return NextResponse.json({ error: `City not found: ${city}` }, { status: 404 })
     }

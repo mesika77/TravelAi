@@ -1,7 +1,13 @@
 import type { WeatherResult } from './types'
 import citiesData from '@/public/data/cities.json'
+import { lookupStoredPlaceByCity } from './places'
 
-export function findCityCoords(cityName: string): { lat: number; lon: number } | null {
+export async function findCityCoords(cityName: string): Promise<{ lat: number; lon: number } | null> {
+  const stored = await lookupStoredPlaceByCity(cityName)
+  if (stored?.lat != null && stored?.lon != null) {
+    return { lat: stored.lat, lon: stored.lon }
+  }
+
   const normalized = cityName.toLowerCase().trim()
   const match = citiesData.find((c) => c.name.toLowerCase() === normalized)
   return match ? { lat: match.lat, lon: match.lon } : null

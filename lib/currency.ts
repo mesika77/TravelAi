@@ -1,5 +1,6 @@
 import type { CurrencyResult } from './types'
 import citiesData from '@/public/data/cities.json'
+import { lookupStoredPlaceByCity } from './places'
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', KRW: '₩',
@@ -11,7 +12,13 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   MAD: 'MAD', DZD: 'DA', TND: 'DT', KES: 'Ksh', NGN: '₦', GHS: 'GH₵',
 }
 
-export function findCurrencyCode(cityName: string): string {
+export async function findCurrencyCode(cityName: string): Promise<string> {
+  const stored = await lookupStoredPlaceByCity(cityName)
+  if (stored?.countryCode) {
+    const countryMatch = citiesData.find((c) => c.countryCode.toLowerCase() === stored.countryCode?.toLowerCase())
+    if (countryMatch?.currencyCode) return countryMatch.currencyCode
+  }
+
   const normalized = cityName.toLowerCase().trim()
   const match = citiesData.find((c) => c.name.toLowerCase() === normalized)
   return match?.currencyCode ?? 'USD'

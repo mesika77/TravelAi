@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import Papa from 'papaparse'
 import citiesData from '@/public/data/cities.json'
+import { lookupStoredPlaceByCity } from './places'
 
 const PASSPORT_NAMES: Record<string, string> = {
   US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
@@ -92,7 +93,10 @@ export function checkVisaOffline(passport: string, destinationCountry: string): 
 export async function checkVisa(passport: string, destination: string): Promise<VisaResult> {
   const passportCode = passport.toUpperCase()
   const passportName = PASSPORT_NAMES[passportCode] ?? passport
-  const city = cityLookup(destination)
+  const stored = await lookupStoredPlaceByCity(destination)
+  const city = stored
+    ? { name: stored.city, country: stored.country, countryCode: stored.countryCode ?? destination.toUpperCase() }
+    : cityLookup(destination)
   const destinationCode = city?.countryCode ?? destination.toUpperCase()
   const destinationName = city?.country ?? destination
 
