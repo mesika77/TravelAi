@@ -8,7 +8,7 @@ import {
   searchPlaceSuggestions,
   type PlaceSuggestion,
 } from './place-search'
-import { sql } from './db'
+import { getSql } from './db'
 
 const AIRLINE_DATABASE_HOST = process.env.RAPIDAPI_AIRLINE_DB_HOST ?? 'airline-database.p.rapidapi.com'
 let schemaReady: Promise<void> | null = null
@@ -64,6 +64,7 @@ function toPlaceSuggestion(row: Record<string, unknown>): PlaceSuggestion {
 async function ensurePlacesSchema() {
   if (!schemaReady) {
     schemaReady = (async () => {
+      const sql = getSql()
       await sql`
         CREATE TABLE IF NOT EXISTS place_queries (
           query TEXT PRIMARY KEY,
@@ -166,6 +167,7 @@ async function fetchRapidApiPlaces(query: string) {
 
 async function getStoredQueryResults(query: string) {
   await ensurePlacesSchema()
+  const sql = getSql()
   const rows = await sql`
     SELECT city, country, country_code, iata, airport_name, lat, lon, timezone, kind, rank, source
     FROM place_results
@@ -177,6 +179,7 @@ async function getStoredQueryResults(query: string) {
 
 async function searchStoredPlaces(query: string, limit = 50) {
   await ensurePlacesSchema()
+  const sql = getSql()
   const normalized = normalizeQuery(query)
   const like = `%${normalized}%`
   const iataLike = `${normalized.toUpperCase()}%`
@@ -198,6 +201,7 @@ export async function lookupStoredPlaceByCity(cityName: string) {
   const normalized = normalizeQuery(cityName)
   try {
     await ensurePlacesSchema()
+    const sql = getSql()
     const rows = await sql`
       SELECT city, country, country_code, iata, airport_name, lat, lon, timezone, kind, rank, source
       FROM place_results
@@ -218,6 +222,7 @@ export async function savePlacesForQuery(query: string, results: PlaceSuggestion
 
   const deduped = dedupePlaceSuggestions(results)
   await ensurePlacesSchema()
+  const sql = getSql()
   await sql`
     INSERT INTO place_queries (query, updated_at)
     VALUES (${normalized}, NOW())
@@ -250,6 +255,7 @@ export async function savePlacesForQuery(query: string, results: PlaceSuggestion
 
 export async function getStoredPlacesStore() {
   await ensurePlacesSchema()
+  const sql = getSql()
   const queryRows = await sql`SELECT query, updated_at FROM place_queries ORDER BY updated_at DESC`
   const queries: Record<string, { updatedAt: string; results: PlaceSuggestion[] }> = {}
 

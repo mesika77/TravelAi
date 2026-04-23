@@ -10,4 +10,11 @@ function createClient() {
   return neon(databaseUrl)
 }
 
-export const sql = createClient()
+let client: ReturnType<typeof createClient> | null = null
+
+export function getSql() {
+  if (!client) {
+    client = createClient()
+  }
+  return client
+}
