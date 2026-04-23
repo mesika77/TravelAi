@@ -6,6 +6,7 @@ import { ArrowRight, ArrowLeft, Minus, Plus, LocateFixed, Compass } from 'lucide
 import { encodeDiscoverId, encodeTripId } from '@/lib/encode'
 import type { DiscoverDateMode, DiscoverParams, TripParams } from '@/lib/types'
 import CityAutocomplete from './CityAutocomplete'
+import PassportAutocomplete, { type PassportOption } from './PassportAutocomplete'
 import citiesData from '@/public/data/cities.json'
 import airportsData from '@/public/data/airports.json'
 
@@ -77,37 +78,37 @@ const INTERESTS = [
   { id: 'beaches', label: 'Beaches' },
 ]
 
-const COUNTRIES = [
-  { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'IT', name: 'Italy' },
-  { code: 'ES', name: 'Spain' },
-  { code: 'NL', name: 'Netherlands' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'KR', name: 'South Korea' },
-  { code: 'CN', name: 'China' },
-  { code: 'IN', name: 'India' },
-  { code: 'BR', name: 'Brazil' },
-  { code: 'MX', name: 'Mexico' },
-  { code: 'ZA', name: 'South Africa' },
-  { code: 'IL', name: 'Israel' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'NZ', name: 'New Zealand' },
-  { code: 'SE', name: 'Sweden' },
-  { code: 'NO', name: 'Norway' },
-  { code: 'CH', name: 'Switzerland' },
-  { code: 'AT', name: 'Austria' },
-  { code: 'BE', name: 'Belgium' },
-  { code: 'PL', name: 'Poland' },
-  { code: 'PT', name: 'Portugal' },
-  { code: 'GR', name: 'Greece' },
-  { code: 'TR', name: 'Turkey' },
-  { code: 'AE', name: 'UAE' },
-  { code: 'TH', name: 'Thailand' },
+const COUNTRIES: PassportOption[] = [
+  { code: 'US', name: 'United States', aliases: ['American', 'USA', 'US'] },
+  { code: 'GB', name: 'United Kingdom', aliases: ['British', 'UK', 'Great Britain'] },
+  { code: 'CA', name: 'Canada', aliases: ['Canadian'] },
+  { code: 'AU', name: 'Australia', aliases: ['Australian'] },
+  { code: 'DE', name: 'Germany', aliases: ['German'] },
+  { code: 'FR', name: 'France', aliases: ['French'] },
+  { code: 'IT', name: 'Italy', aliases: ['Italian'] },
+  { code: 'ES', name: 'Spain', aliases: ['Spanish'] },
+  { code: 'NL', name: 'Netherlands', aliases: ['Dutch'] },
+  { code: 'JP', name: 'Japan', aliases: ['Japanese'] },
+  { code: 'KR', name: 'South Korea', aliases: ['Korean', 'South Korean'] },
+  { code: 'CN', name: 'China', aliases: ['Chinese'] },
+  { code: 'IN', name: 'India', aliases: ['Indian'] },
+  { code: 'BR', name: 'Brazil', aliases: ['Brazilian'] },
+  { code: 'MX', name: 'Mexico', aliases: ['Mexican'] },
+  { code: 'ZA', name: 'South Africa', aliases: ['South African'] },
+  { code: 'IL', name: 'Israel', aliases: ['Israeli'] },
+  { code: 'SG', name: 'Singapore', aliases: ['Singaporean'] },
+  { code: 'NZ', name: 'New Zealand', aliases: ['New Zealander', 'Kiwi'] },
+  { code: 'SE', name: 'Sweden', aliases: ['Swedish', 'Swede'] },
+  { code: 'NO', name: 'Norway', aliases: ['Norwegian'] },
+  { code: 'CH', name: 'Switzerland', aliases: ['Swiss'] },
+  { code: 'AT', name: 'Austria', aliases: ['Austrian'] },
+  { code: 'BE', name: 'Belgium', aliases: ['Belgian'] },
+  { code: 'PL', name: 'Poland', aliases: ['Polish'] },
+  { code: 'PT', name: 'Portugal', aliases: ['Portuguese'] },
+  { code: 'GR', name: 'Greece', aliases: ['Greek'] },
+  { code: 'TR', name: 'Turkey', aliases: ['Turkish'] },
+  { code: 'AE', name: 'United Arab Emirates', aliases: ['UAE', 'Emirati'] },
+  { code: 'TH', name: 'Thailand', aliases: ['Thai'] },
 ]
 
 const UPCOMING_MONTHS = getUpcomingMonths()
@@ -539,15 +540,13 @@ export default function SearchForm() {
           <div className="sf-grid-2">
             <div className="field">
               <div className="field-label">Passport</div>
-              <select
-                className="select"
+              <PassportAutocomplete
+                label="Passport"
                 value={form.passport}
-                onChange={(e) => setField('passport', e.target.value)}
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setField('passport', val)}
+                options={COUNTRIES}
+                placeholder="American, British, Israeli..."
+              />
             </div>
 
             {searchMode === 'discover' && (
