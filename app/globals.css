@@ -831,7 +831,14 @@ em { font-style: italic; }
   .hero-meta { grid-template-columns: 1fr; gap: 14px; }
   .hero-stamp { position: static; margin-top: 12px; transform: none; max-width: none; }
   .search-section { padding: 56px 0 40px; }
-  .search-section-head h2[style], .what-head h2[style] { font-size: 15vw !important; max-width: 100% !important; line-height: 0.94; }
+  .search-section-head h2[style], .what-head h2[style] {
+    font-size: clamp(40px, 11.8vw, 48px) !important;
+    max-width: 100% !important;
+    line-height: 0.98;
+    letter-spacing: -0.018em;
+    padding-inline-start: 0.05em;
+    overflow-wrap: anywhere;
+  }
   .searchform { padding: 18px 14px 16px; }
   .field-label, .eyebrow, .kicker { letter-spacing: 0.12em; }
   .input, .select { font-size: 16px; }
@@ -886,7 +893,11 @@ em { font-style: italic; }
   .nav { padding: 0 14px; }
   .nav-brand { gap: 10px; font-size: 18px; }
   .nav-brand-mark { width: 26px; height: 26px; font-size: 13px; }
-  .search-section-head h2[style], .what-head h2[style] { font-size: 13.5vw !important; }
+  .search-section-head h2[style], .what-head h2[style] {
+    font-size: clamp(37px, 11.2vw, 44px) !important;
+    line-height: 1;
+    padding-inline-start: 0.06em;
+  }
   .trip-route { row-gap: 4px; }
   .trip-route .serif { font-size: 15px !important; }
   .trip-meta { gap: 8px; }
