@@ -82,6 +82,10 @@ export default function FlightCard() {
         )}
       </div>
 
+      <p className="mono mute" style={{ margin: '10px 0 18px', fontSize: 11, lineHeight: 1.6 }}>
+        Flight prices are estimates from hourly checks and may change before booking. Always confirm the final fare with the airline or booking site.
+      </p>
+
       {/* States */}
       {loading && (
         <div className="flight-list">
