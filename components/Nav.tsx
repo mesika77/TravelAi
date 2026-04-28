@@ -1,13 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Moon, Sun } from 'lucide-react'
 
 export default function Nav() {
-  const [dark, setDark] = useState(() => (
-    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  ))
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const saved = localStorage.getItem('theme')
+      const isDark = saved === 'dark'
+      document.documentElement.classList.toggle('dark', isDark)
+      setDark(isDark)
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
+  }, [])
 
   const toggle = () => {
     const html = document.documentElement

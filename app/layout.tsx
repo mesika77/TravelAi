@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google'
 import Nav from '@/components/Nav'
 import ClientRuntime from '@/components/ClientRuntime'
@@ -58,13 +57,6 @@ export const viewport: Viewport = {
   ],
 }
 
-const themeBootstrap = `
-  try {
-    var saved = localStorage.getItem('theme');
-    if (saved === 'dark') document.documentElement.classList.add('dark');
-  } catch (error) {}
-`
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -73,9 +65,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col">
-        <Script id="theme-bootstrap" strategy="beforeInteractive">
-          {themeBootstrap}
-        </Script>
         <ClientRuntime />
         <Nav />
         <main className="flex-1">{children}</main>

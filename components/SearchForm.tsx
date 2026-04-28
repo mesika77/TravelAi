@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, ArrowLeft, Minus, Plus, LocateFixed, Compass } from 'lucide-react'
 import { encodeDiscoverId, encodeTripId } from '@/lib/encode'
@@ -36,6 +36,28 @@ const citiesWithAirports = (citiesData as { name: string; lat: number; lon: numb
   (c) => airportCities.has(c.name.toLowerCase())
 )
 
+const timezoneOriginFallbacks: Record<string, string> = {
+  'America/New_York': 'New York',
+  'America/Chicago': 'Chicago',
+  'America/Denver': 'Denver',
+  'America/Los_Angeles': 'Los Angeles',
+  'America/Phoenix': 'Phoenix',
+  'America/Anchorage': 'Seattle',
+  'Pacific/Honolulu': 'Honolulu',
+  'Europe/London': 'London',
+  'Europe/Paris': 'Paris',
+  'Europe/Berlin': 'Berlin',
+  'Europe/Madrid': 'Madrid',
+  'Europe/Rome': 'Rome',
+  'Europe/Amsterdam': 'Amsterdam',
+  'Asia/Jerusalem': 'Tel Aviv',
+  'Asia/Dubai': 'Dubai',
+  'Asia/Singapore': 'Singapore',
+  'Asia/Tokyo': 'Tokyo',
+  'Australia/Sydney': 'Sydney',
+  'Australia/Melbourne': 'Melbourne',
+}
+
 function getUpcomingMonths() {
   const base = new Date()
   return Array.from({ length: 12 }, (_, index) => {
@@ -65,6 +87,26 @@ function nearestAirportCity(lat: number, lon: number): string {
     if (d < bestDist) { bestDist = d; best = c }
   }
   return best.name
+}
+
+function timezoneFallbackCity(): string | null {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const city = timezoneOriginFallbacks[timezone]
+  return city && airportCities.has(city.toLowerCase()) ? city : null
+}
+
+function browserLocationCity(): Promise<string | null> {
+  if (!navigator.geolocation) return Promise.resolve(null)
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve(nearestAirportCity(pos.coords.latitude, pos.coords.longitude))
+      },
+      () => resolve(null),
+      { timeout: 10000, maximumAge: 300_000, enableHighAccuracy: false }
+    )
+  })
 }
 
 const INTERESTS = [
@@ -115,12 +157,14 @@ const UPCOMING_MONTHS = getUpcomingMonths()
 
 export default function SearchForm() {
   const router = useRouter()
+  const [hydrated, setHydrated] = useState(false)
   const [step, setStep] = useState(0)
   const [searchMode, setSearchMode] = useState<SearchMode>('trip')
   const [dateMode, setDateMode] = useState<DiscoverDateMode>('exact')
   const [oneWay, setOneWay] = useState(false)
   const [detectedCity, setDetectedCity] = useState<string | null>(null)
   const [locating, setLocating] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [form, setForm] = useState<SearchDraft>({
     origin: '',
     destination: '',
@@ -141,41 +185,42 @@ export default function SearchForm() {
     setForm((current) => ({ ...current, [key]: val }))
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => setHydrated(true), 0)
+    return () => window.clearTimeout(timeout)
+  }, [])
+
+  const autofillOrigin = useCallback(async (force = false) => {
+    setLocating(true)
+    const city = await browserLocationCity() ?? timezoneFallbackCity()
+
+    if (city) {
+      setDetectedCity(city)
+      setForm((current) => ({ ...current, origin: force ? city : current.origin || city }))
+    }
+
+    setLocating(false)
+  }, [])
+
+  useEffect(() => {
     const handler = (e: Event) => {
       const city = (e as CustomEvent<{ destination: string }>).detail.destination
       if (city) {
         setSearchMode('trip')
         setField('destination', city)
-        if (!detectedCity && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const nearest = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
-              setDetectedCity(nearest)
-              setForm((current) => ({ ...current, origin: nearest }))
-            },
-            () => {},
-            { timeout: 6000, maximumAge: 300_000 }
-          )
-        }
+        void autofillOrigin()
       }
     }
     window.addEventListener('travelai:prefill', handler)
     return () => window.removeEventListener('travelai:prefill', handler)
-  }, [detectedCity])
+  }, [autofillOrigin])
 
   useEffect(() => {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const city = nearestAirportCity(pos.coords.latitude, pos.coords.longitude)
-        setDetectedCity(city)
-        setForm((current) => ({ ...current, origin: current.origin || city }))
-        setLocating(false)
-      },
-      () => setLocating(false),
-      { timeout: 10000, maximumAge: 300_000, enableHighAccuracy: false }
-    )
-  }, [])
+    const timeout = window.setTimeout(() => {
+      setMounted(true)
+      void autofillOrigin()
+    }, 0)
+    return () => window.clearTimeout(timeout)
+  }, [autofillOrigin])
 
   const toggleInterest = (id: string) => {
     const current = form.interests
@@ -237,6 +282,13 @@ export default function SearchForm() {
   const canNext0 = searchMode === 'trip' ? canNextTrip : canNextDiscover
   const canNext1 = form.adults > 0 && (searchMode === 'discover' || oneWay || form.budget > 0)
   const canSubmit = canNext1 && Boolean(form.passport) && form.interests.length > 0
+  const locationButtonVisible = mounted && (!detectedCity || form.origin !== detectedCity || locating)
+  const locationButtonLabel = locating ? 'Detecting...' : 'Use location'
+  const detectedBadgeVisible = mounted && Boolean(detectedCity) && form.origin === detectedCity && !locating
+
+  if (!hydrated) {
+    return <div className="searchform planner-surface" />
+  }
 
   return (
     <div className="searchform planner-surface">
@@ -319,18 +371,37 @@ export default function SearchForm() {
 
           <div className="sf-grid-2">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
                 <div className="field-label">From</div>
-                {locating && (
-                  <span className="mono mute" style={{ fontSize: 9, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <LocateFixed size={10} style={{ animation: 'spin 1s linear infinite' }} /> Detecting…
-                  </span>
-                )}
-                {detectedCity && form.origin === detectedCity && !locating && (
-                  <span className="mono" style={{ fontSize: 9, color: 'var(--go)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <LocateFixed size={10} /> Detected
-                  </span>
-                )}
+                <span
+                  className="mono"
+                  aria-hidden={!detectedBadgeVisible}
+                  style={{
+                    fontSize: 9,
+                    color: 'var(--go)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    visibility: detectedBadgeVisible ? 'visible' : 'hidden',
+                  }}
+                >
+                  <LocateFixed size={10} /> Detected
+                </span>
+                <button
+                  type="button"
+                  className="location-inline"
+                  onClick={() => void autofillOrigin(true)}
+                  aria-label="Use my current location"
+                  aria-hidden={!locationButtonVisible}
+                  disabled={!mounted || locating}
+                  style={{
+                    visibility: locationButtonVisible ? 'visible' : 'hidden',
+                    pointerEvents: locationButtonVisible ? 'auto' : 'none',
+                  }}
+                >
+                  <LocateFixed size={11} strokeWidth={1.8} style={{ animation: locating ? 'spin 1s linear infinite' : undefined }} />
+                  <span>{locationButtonLabel}</span>
+                </button>
               </div>
               <CityAutocomplete
                 placeholder="New York"

@@ -63,7 +63,8 @@ export default function ChatBot() {
       <button
         className="chat-fab"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Open concierge"
+        aria-label={open ? 'Close concierge' : 'Open concierge'}
+        aria-expanded={open}
       >
         {open ? <X size={20} strokeWidth={2} /> : <Sparkles size={20} strokeWidth={1.5} />}
       </button>
@@ -75,13 +76,21 @@ export default function ChatBot() {
             <div className="chat-header-mark">
               <Sparkles size={14} strokeWidth={1.5} />
             </div>
-            <div>
+            <div className="chat-header-copy">
               <div className="serif" style={{ fontSize: 16 }}>Concierge</div>
               <div className="mono mute" style={{ marginTop: 2 }}>
                 {params.origin} → {params.destination}
                 {nights > 0 ? ` · ${nights} nights` : ' · One way'}
               </div>
             </div>
+            <button
+              type="button"
+              className="chat-close"
+              onClick={() => setOpen(false)}
+              aria-label="Close concierge"
+            >
+              <X size={18} strokeWidth={2} />
+            </button>
           </div>
 
           <div className="chat-body">

@@ -174,6 +174,13 @@ em { font-style: italic; }
   background-repeat: no-repeat;
   background-position: right 2px center;
 }
+.location-inline {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--ink-3); font-family: var(--f-mono);
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.location-inline:hover { color: var(--ink); }
 
 /* ========== PILL TOGGLE ========== */
 .pill-toggle {
@@ -735,10 +742,23 @@ em { font-style: italic; }
   display: flex; align-items: center; gap: 12px;
   padding: 16px 18px; border-bottom: 1px solid var(--line-soft);
 }
+.chat-header-copy { flex: 1; min-width: 0; }
 .chat-header-mark {
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
   display: grid; place-items: center;
+}
+.chat-close {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; flex-shrink: 0;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.chat-close:hover {
+  background: var(--paper);
+  border-color: var(--line);
+  transform: scale(1.04);
 }
 .chat-body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
 .chat-msg { display: flex; gap: 10px; max-width: 90%; }
